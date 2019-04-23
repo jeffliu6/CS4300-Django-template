@@ -7,11 +7,11 @@ def create_connection():
                                              database='BestBud')
      return db_connection
 
-def select_test():
+def execute_select_statement(select_statement):
      connection = create_connection()
      cursor = connection.cursor()
 
-     cursor.execute('SELECT strain_name FROM strains WHERE id < 10;')
+     cursor.execute(select_statement)
 
      result = cursor.fetchall()
 
