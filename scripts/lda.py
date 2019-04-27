@@ -8,7 +8,9 @@ from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
 from nltk.tokenize import RegexpTokenizer
 import json
 import pandas as pd
-from os.path import dirname, abspath
+import os
+# from os.path import dirname, abspath
+from pathlib import Path
 
 
 def format_topics_sentences(ldamodel, corpus, texts):
@@ -84,16 +86,11 @@ def lda_try():
 
     corpus = [id2word.doc2bow(text) for text in data_lemmatized]
 
-    # Mac
-    # mallet_path = '../data/mallet-2.0.8/bin/mallet'
-
-    # Windows
-    # mallet_path = dirname(dirname(abspath(__file__))) + '\\data\\mallet-2.0.8\\bin\\mallet'
-    mallet_path = '..\\data\\mallet-2.0.8\\bin\\mallet'
+    mallet_path = '\\mallet-2.0.8\\bin\\mallet.bat'
     ldamallet = gensim.models.wrappers.LdaMallet(mallet_path, corpus=corpus, num_topics=20, id2word=id2word)
 
     # model_topics = ldamallet.show_topics(formatted=False)
-    # print(ldamallet.print_topics(num_words=10))
+    # print(ldamallet.print_topics( num_words=10))
 
     df_topic_sents_keywords = format_topics_sentences(ldamodel=ldamallet, corpus=corpus, texts=final_tokenized)
     final_lda_list = df_topic_sents_keywords['Dominant_Topic'].tolist()
@@ -102,14 +99,5 @@ def lda_try():
         json.dump(final_lda_list,f)
 
 
-def temp():
-    d = dirname(dirname(abspath(__file__))) + '\\data\\mallet-2.0.8\\bin\\mallet'
-    print(d)
-    d2 = '\\data\\mallet-2.0.8\\bin\\mallet'
-    print(d2)
-
-
-
 if __name__ == "__main__":
-    # temp()
     lda_try()

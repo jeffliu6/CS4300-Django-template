@@ -491,19 +491,11 @@ def add_dominant_topic():
         json.dump(all_data, outfile)
 
 
-def main_run():
-    lda_try()
-    # all_data = {}
-    # with open('../data/combined_cleaned_data.json', encoding="utf8") as f:
-    #     all_data = json.load(f)
-    # print(all_data[0])
-
 
 def run_all():
     combine_all_data()
     add_dominant_topic()
     find_dims()
-    lda_try()
 
 
 def combine_data():
@@ -515,5 +507,4 @@ def combine_data():
 if __name__ == "__main__":
     #combine_data()
 
-    # run_all()
-    main_run()
+    run_all()
