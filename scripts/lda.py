@@ -8,6 +8,10 @@ from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
 from nltk.tokenize import RegexpTokenizer
 import json
 import pandas as pd
+import os
+# from os.path import dirname, abspath
+from pathlib import Path
+
 
 def format_topics_sentences(ldamodel, corpus, texts):
     # Init output
@@ -82,46 +86,17 @@ def lda_try():
 
     corpus = [id2word.doc2bow(text) for text in data_lemmatized]
 
-    mallet_path = '../data/mallet-2.0.8/bin/mallet'
-
+    mallet_path = '\\mallet-2.0.8\\bin\\mallet.bat'
     ldamallet = gensim.models.wrappers.LdaMallet(mallet_path, corpus=corpus, num_topics=20, id2word=id2word)
 
     # model_topics = ldamallet.show_topics(formatted=False)
-    # print(ldamallet.print_topics(num_words=10))
+    # print(ldamallet.print_topics( num_words=10))
 
     df_topic_sents_keywords = format_topics_sentences(ldamodel=ldamallet, corpus=corpus, texts=final_tokenized)
     final_lda_list = df_topic_sents_keywords['Dominant_Topic'].tolist()
     print(final_lda_list)
     with open('../data/final_lda.json', 'w') as f:
         json.dump(final_lda_list,f)
-
-
-    # final_lst = ldamallet.show_topics(num_topics = 20, formatted=False)
-    # # print((final_lst))
-    # final_dict = {}
-    # for topic in final_lst:
-    #     final_dict[str(topic[0])] = {}
-    #     for word in topic[1]:
-    #         (final_dict[str(topic[0])])[word[0]] = word[1]
-    #
-    #
-    #
-    #
-    # with open('../data/lda.json', 'w') as f:
-    #     json.dump(final_dict, f)
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 if __name__ == "__main__":
