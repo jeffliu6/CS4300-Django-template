@@ -1,6 +1,11 @@
 import json
 import re
 from constants import *
+from geopy.geocoders import Nominatim
+import time
+from svd import find_dims
+from lda import lda_try
+
 
 def editDistDP(str1, str2, m, n):
     # Create a table to store results of subproblems
@@ -45,6 +50,7 @@ def find_strain_obj_in_lst(name, lst):
         if obj["name"] == name:
             return obj
     return None
+
 
 def combine_allbud_data(curr_strainobject, strain_match_lst, info_dict):
     strain_match_objectlst = []
@@ -380,6 +386,7 @@ def combine_otri_leaf_data(o_data, l_data):
     new_obj["alternative_names"] = final_alt_names
     return new_obj
 
+
 def combine_allbud_ol_data(allbud_data, ol_data):
     new_obj = {** allbud_data, ** ol_data}
     new_obj["description"] = allbud_data["description"] + "\n" + ol_data["description"]
@@ -395,8 +402,6 @@ def combine_allbud_ol_data(allbud_data, ol_data):
     new_obj["medical"] = list(set(new_obj['medical_symptoms_it_treats'] + new_obj['medical']))
     new_obj.pop('medical_symptoms_it_treats', None)
     return new_obj
-
-
 
 
 def combine_all_data():
@@ -469,7 +474,6 @@ def combine_all_data():
         json.dump(final_lst, outfile)
 
 
-
 def add_dominant_topic():
     all_data = {}
     dom_topic_data = []
@@ -487,15 +491,29 @@ def add_dominant_topic():
         json.dump(all_data, outfile)
 
 
+def main_run():
+    lda_try()
+    # all_data = {}
+    # with open('../data/combined_cleaned_data.json', encoding="utf8") as f:
+    #     all_data = json.load(f)
+    # print(all_data[0])
 
 
+def run_all():
+    combine_all_data()
+    add_dominant_topic()
+    find_dims()
+    lda_try()
 
 
+def combine_data():
+    remove_dupes_allbud()
+    remove_dupes_leafly()
+    combine_leafly_allbud_dicts()
 
 
 if __name__ == "__main__":
-    # remove_dupes_allbud()
-    # remove_dupes_leafly()
-    # combine_leafly_allbud_dicts()
-    # combine_all_data()
-    add_dominant_topic()
+    #combine_data()
+
+    # run_all()
+    main_run()

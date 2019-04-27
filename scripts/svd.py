@@ -1,7 +1,6 @@
 from sklearn.feature_extraction.text import TfidfVectorizer
 import json
-from scipy.sparse.linalg import svds
-import matplotlib
+# from scipy.sparse.linalg import svds
 from constants import additional_stopwords
 from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
 import numpy as np
@@ -24,34 +23,18 @@ def find_dims():
     #turn text into matrix
     stop_words = ENGLISH_STOP_WORDS.union(additional_stopwords)
     vectorizer = TfidfVectorizer(stop_words = stop_words, max_df = .90, min_df = 200)
-    my_matrix = vectorizer.fit_transform(documents)#.transpose()
-
-
-
-    #this is our machine learning component
-    words_compressed, s, docs_compressed = svds(my_matrix,k=40)
-    docs_compressed = docs_compressed.transpose()
-    word_to_index = vectorizer.vocabulary_
+    my_matrix = vectorizer.fit_transform(documents)
 
     keys_vector = []
-    # index_to_word = {i:t for t,i in word_to_index.items()}
-    with open('../data/extra_svd_dims.json', 'w') as f:
-        json.dump(list(word_to_index.keys()), f)
     with open('../data/keys_vector.json') as f:
         keys_vector = json.load(f)
-
-    # rev_des_matrix = words_compressed.toarray()
-    rev_des_matrix = np.ceil(words_compressed)
 
     cond_vectors = []
     for input in input_data:
         cond_vector = strain_to_vector(input, keys_vector)
         cond_vectors.append(cond_vector)
-    condition_matrix = np.array([np.array(xi) for xi in cond_vectors])
-    final_matrix = np.concatenate((rev_des_matrix, condition_matrix), axis=1)
-
+    final_matrix = np.array([np.array(xi) for xi in cond_vectors])
     average_matrix = list(np.mean(final_matrix, axis=0))
-
 
     # add vector to every strain
     i = 0
@@ -77,6 +60,7 @@ def strain_to_vector(input, keys_vector):
             cond_vector.append(0)
     cond_vector.append(float(input['rating'])/5)
     return cond_vector
+
 
 def gather_keys():
     '''
