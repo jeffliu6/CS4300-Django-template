@@ -22,7 +22,7 @@ $(document).ready(function(){
         "Orange", "Pepper", "Pine", "Pineapple", "Pungent", "Sage", "Skunky", "Sour",
         "Spicy", "Strawberry", "Sweet", "Tropical", "Vanilla", "Woody"];
    
-    $("#similarSearch").slideDown(500);
+    $("#customSearch").fadeIn(500);
 
     // Effects entry set up
     $('#key-words').keypress(function(event){
@@ -188,6 +188,7 @@ $(document).ready(function(){
         return val.substring(0, val.length - 1)
     }
     let requestData = {};
+    requestData.query = "custom";
     requestData.medicalEffects = [];
     requestData.desiredEffects = [];
     requestData.undesiredEffects = [];
@@ -207,7 +208,7 @@ $(document).ready(function(){
  $("#state")[0].value;
 
     // Submit request logic
-    $( "#similarSearch" ).submit(function( event ) {
+    $( "#customSearch" ).submit(function( event ) {
         event.preventDefault();
         requestData.medicalEffects = [];
         requestData.desiredEffects = [];
@@ -233,11 +234,12 @@ $(document).ready(function(){
             }
         })
         console.log(requestData);
-        $.post( "/results", JSON.stringify(requestData))
+        $.post( "results-custom", JSON.stringify(requestData))
         .always(function() {
             $("#loadingDiv").fadeIn();
         })
         .done(function( data ) {
+            console.log(data);
             data = JSON.parse(data);
             
             $('#results').empty();
@@ -273,7 +275,7 @@ $(document).ready(function(){
             });
             $("#loadingDiv").fadeOut();
 
-            $("#similarSearch").animate({
+            $("#customSearch").animate({
                 width: "30%"
             }, 500, function(){
                 $("#results").addClass("d-flex").show(500);

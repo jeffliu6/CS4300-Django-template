@@ -39,9 +39,13 @@ def cosine_sim(a, b):
     cos = dot / (norma * normb)
     return cos
 
+@csrf_exempt
+def similar_results(request):
+    results = []
+    return HttpResponse(json.dumps(results))
 
 @csrf_exempt
-def results(request):
+def custom_results(request):
     # MAX_THC = 34.0
     # MIN_THC = 1.0
     # MEAN_THC = 19.092282784673504
