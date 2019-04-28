@@ -9,6 +9,8 @@ import numpy as np
 from numpy import array, dot
 from numpy.linalg import norm
 from random import shuffle
+from django.conf import settings
+
 
 import sys
 sys.path.append('../../scripts')
@@ -52,7 +54,7 @@ def get_request_data(request):
     return json.loads(k)
 
 
-def get_strain(data, keys_vector):
+def parse_search(data, keys_vector):
     '''
         determine what search terms are valid and
         set up the strain object
@@ -81,11 +83,16 @@ def get_strain(data, keys_vector):
     # city = data.get('city')
     # strength = data.get('strength')
 
-    #determine avlid keys
+    #determine valid keys
     valid_key_lst = []
     for keyword in keyword_lst:
         if keyword in keys_vector:
             valid_key_lst.append(keyword.lower().strip())
+
+    #if input is just gibberish return None
+    if len(desired_lst) + len(undesired_lst) + len(medical_lst) + \
+        len(aromas_lst) + len(flavors_lst) + len(valid_key_lst) == 0:
+        return None
 
     return {
         'positive': desired_lst,
@@ -123,33 +130,7 @@ def get_rel_search(search_strain_vector):
             relv_search.append((index, search_strain_vector[index]))
     return search_strain, relv_search
 
-
-@csrf_exempt
-def custom_results(request):
-    RATING_WEIGHT = 1/4
-    DOM_TOPIC_WEIGHT = 1/8
-    REMAINING_WEIGHT = 1 - RATING_WEIGHT - DOM_TOPIC_WEIGHT
-
-    data = {}
-    with open('./data/combined_cleaned_data.json', encoding="utf8") as f:
-        data = json.loads(f.read())
-    keys_vector = []
-    with open('./data/keys_vector.json') as f:
-        keys_vector = json.load(f)
-
-    # set up request data
-    q = get_request_data(request)
-
-    # get strain and determine valid search
-    strain = get_strain(q, keys_vector)
-    search_strain_vector = strain_to_vector(strain, keys_vector)
-
-    #finding the relevant dimensions to run cosine sim on
-    search_strain, relv_search = get_rel_search(search_strain_vector)
-
-    #get dominant topic
-    dom_topic = get_dom_topic(strain)
-
+def rank_strains(data, search_strain, relv_search, dom_topic):
     scoring = []
     for i in range(len(data)):
         curr_strain = data[i]
@@ -160,18 +141,55 @@ def custom_results(request):
             curr_array.append(curr_value)
         cos_sim = cosine_sim(array(search_strain), array(curr_array))
         rating = float(curr_strain['rating'])/5
-        score = RATING_WEIGHT * (cos_sim*rating) + \
-            DOM_TOPIC_WEIGHT * (1 if curr_strain['dominant_topic'] == int(dom_topic) else 0) + \
-            REMAINING_WEIGHT * cos_sim
+        score = settings.RATING_WEIGHT * (cos_sim*rating) + \
+            settings.DOM_TOPIC_WEIGHT * (1 if curr_strain['dominant_topic'] == int(dom_topic) else 0) + \
+            settings.REMAINING_WEIGHT * cos_sim
         scoring.append((score, curr_strain))
 
     sorted_strains = sorted(scoring, key=lambda tup: tup[0], reverse=True)
-    top_ten = sorted_strains[:9]
-    data = top_ten
-    return HttpResponse(json.dumps(data))
+
+    #return top 10
+    return sorted_strains[:9]
 
 
-def strain_to_vector(input, keys_vector):
+
+@csrf_exempt
+def custom_results(request):
+    data = {}
+    with open('./data/combined_cleaned_data.json', encoding="utf8") as f:
+        data = json.loads(f.read())
+    keys_vector = []
+    with open('./data/keys_vector.json') as f:
+        keys_vector = json.load(f)
+
+    # set up request data
+    user_request = get_request_data(request)
+
+    # get strain and determine valid search
+    search_obj = parse_search(user_request, keys_vector)
+
+    #if no inputs or gibberish inputs in keywords only
+    if search_obj is None:
+        return HttpResponse(json.dumps([]))
+
+    # turn object into vector so we can use cosine similarity
+    search_strain_vector = search_to_vector(search_obj, keys_vector)
+
+    # get list of strains from SQL database
+    # data = get_stuff_from_fred()
+
+    #finding the relevant dimensions to run cosine sim on
+    search_strain, relv_search = get_rel_search(search_strain_vector)
+
+    #get dominant topic
+    dom_topic = get_dom_topic(search_obj)
+
+    output = rank_strains(data, search_strain, relv_search, dom_topic)
+
+    return HttpResponse(json.dumps(output))
+
+
+def search_to_vector(input, keys_vector):
     vector_list_1 = input['positive'] + input['negative_effects'] + \
         input['medical'] + input['aroma'] + input['flavor_descriptors']
     vector_list = [x.lower() for x in vector_list_1]
