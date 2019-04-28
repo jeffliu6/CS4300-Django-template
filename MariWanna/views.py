@@ -138,10 +138,10 @@ def custom_results(request):
         keys_vector = json.load(f)
 
     # set up request data
-    q = get_request_data(request)
+    user_query = get_request_data(request)
 
     # get strain and determine valid search
-    strain = get_strain(q, keys_vector)
+    strain = get_strain(user_query, keys_vector)
     search_strain_vector = strain_to_vector(strain, keys_vector)
 
     #finding the relevant dimensions to run cosine sim on
