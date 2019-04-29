@@ -4,6 +4,16 @@ $(document).ready(function() {
     let requestData = {};
     requestData.query = "similar";
 
+    $.getJSON("/static/data/strain_names.json", function(names){
+        let count = 0;
+        names = names.map((name) => {return {"id":name, "text":name};});
+        
+        $("#strain-input").select2({
+            data: names
+        });
+    });
+    
+
     // Submit request logic
     $( "#similarSearch" ).submit(function( event ) {
         event.preventDefault();
