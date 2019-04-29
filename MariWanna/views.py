@@ -85,6 +85,7 @@ def similar_results(request):
     with open('./data/keys_vector.json', encoding="utf8") as f:
         keys = json.loads(f.read())
 
+    top_ten_final = []
     for sim_tup in top_ten:
         sim_score = sim_tup[0]
         sim_strain = sim_tup[1]
@@ -97,21 +98,28 @@ def similar_results(request):
         matched_vector = matched_vector[:-1]
 
 
-
+        inverse_categories= {}
+        with open('./data/inverse_categories.json', encoding="utf8") as f:
+            inverse_categories = json.loads(f.read())
 
         for index in range(len(matched_vector)):
             if matched_vector[index] > 1:
                 matched_factor = keys[index]
                 matched_values.append(matched_factor)
-        print(matched_values)
+
+        final_matched_lst = {}
+        for value in matched_values:
+            curr_category = (inverse_categories[value])[0]
+            if curr_category in final_matched_lst:
+                final_matched_lst[curr_category] = final_matched_lst[curr_category] + [value]
+            else:
+                final_matched_lst[curr_category] = [value]
+        top_ten_final.append((sim_score, sim_strain, final_matched_lst))
 
 
+    sorted_strains_final = sorted(top_ten_final, key=lambda tup: tup[0], reverse=True)
 
-
-
-
-
-    return HttpResponse(json.dumps(data))
+    return HttpResponse(json.dumps(sorted_strains_final))
 
 
 def get_request_data(request):
