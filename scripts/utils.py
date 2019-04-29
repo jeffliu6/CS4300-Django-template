@@ -1,8 +1,6 @@
 import json
 
 
-
-
 def get_all_categories():
     all_data = {}
     with open('../data/combined_cleaned_data.json', encoding="utf8") as f:
@@ -33,6 +31,24 @@ def get_all_categories():
     with open('../data/categories.json', 'w') as outfile:
         json.dump(output, outfile)
 
+def reverse_categories():
+    categories = {}
+    with open('../data/categories.json', encoding="utf8") as f:
+        categories = json.load(f)
+
+    inverse_dict = {}
+    for category in categories:
+        category_lst = categories[category]
+        for term in category_lst:
+            if term in inverse_dict:
+                inverse_dict[term].append(category)
+            else:
+                inverse_dict[term] = [category]
+
+    with open('../data/inverse_categories.json', 'w') as outfile:
+        json.dump(inverse_dict, outfile)
+
 
 if __name__ == "__main__":
-    get_all_categories()
+    # get_all_categories()
+    reverse_categories()

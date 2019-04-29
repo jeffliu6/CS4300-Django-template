@@ -127,23 +127,37 @@ def parse_search(data, keys_vector):
         determine what search terms are valid and
         set up the strain object
     '''
-    medical_lst = data.get("medicalEffects")
-    if medical_lst == None:
-        medical_lst = []
-    desired_lst = data.get("desiredEffects")
+    categories = {}
+    with open('./data/categories.json', encoding="utf8") as f:
+        categories = json.load(f)
 
-    if desired_lst == None:
-        desired_lst = []
-    undesired_lst = data.get("undesiredEffects")
-    if undesired_lst == None:
-        desired_lst = []
-    flavors_lst = data.get("flavors")
-    if flavors_lst == None:
-        flavors_lst = []
-    aromas_lst = data.get("aromas")
-    if aromas_lst == None:
-        aromas_lst = []
-    keyword_lst = data.get("keyword")
+    draft_medical_lst = data.get("medicalEffects")
+    medical_lst = []
+    for term in draft_medical_lst:
+        if term in categories['medical']:
+            medical_lst.append(term)
+    draft_positive_lst = data.get("desiredEffects")
+    positive_lst = []
+    for term in draft_positive_lst:
+        if term in categories['positive']:
+            positive_lst.append(term)
+    draft_negative_lst = data.get("undesiredEffects")
+    negative_lst = []
+    for term in draft_negative_lst:
+        if term in categories['negative']:
+            negative_lst.append(term)
+    draft_aroma_lst = data.get("aromas")
+    aroma_lst = []
+    for term in draft_aroma_lst:
+        if term in categories['aroma']:
+            aroma_lst.append(term)
+    draft_flavor_lst = data.get("flavors")
+    flavor_lst = []
+    for term in draft_flavor_lst:
+        if term in categories['flavor']:
+            flavor_lst.append(term)
+
+    draft_keyword_lst = data.get("keyword")
     if keyword_lst == None:
         keyword_lst = []
 
@@ -158,13 +172,13 @@ def parse_search(data, keys_vector):
             valid_key_lst.append(keyword.lower().strip())
 
     #if input is just gibberish return None
-    if len(desired_lst) + len(undesired_lst) + len(medical_lst) + \
+    if len(positive_lst) + len(negative_lst) + len(medical_lst) + \
         len(aromas_lst) + len(flavors_lst) + len(valid_key_lst) == 0:
         return None
 
     return {
-        'positive': desired_lst,
-        'negative_effects': undesired_lst,
+        'positive': positive_lst,
+        'negative_effects': negative_lst,
         'medical': medical_lst,
         'aroma': aromas_lst,
         'flavor_descriptors': flavors_lst,
@@ -235,7 +249,7 @@ def custom_results(request):
 
     # get strain and determine valid search
     search_obj = parse_search(user_request, keys_vector)
-    
+
     #if no inputs or gibberish inputs in keywords only
     if search_obj is None:
         return HttpResponse(json.dumps([]))
