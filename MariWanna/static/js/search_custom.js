@@ -1,26 +1,41 @@
-$(document).ready(function(){
-
+$(document).ready(function(){ $.getJSON( "/static/data/select-options.json" , function( select_data ){
+    console.log(select_data.aromas);
     // Autocomplete Options
-    let medical_effects = ["Cramps", "Depression", "Eye Pressure", "Fatigue", "Headaches",
-        "Inflammation", "Insomnia", "Lack of Appetite", "Muscle Spasms", "Nausea",
-        "Pain", "Seizures", "Spasticity", "Stress"];
-    let desired_effects = ["Aroused", "Creative", "Energetic", "Euphoric", "Focused", 
-        "Giggly", "Happy", "Hungry", "Relaxed", "Sleepy", "Talkative", "Tingly", "Uplifted"];
-    let undesired_effects = ["Anxious", "Dizzy", "Dry Eyes", "Dry Mouth", "Headache", "Paranoid"];
-    let flavors = ["Apple", "Berry", "Blueberry", "Bubble Gum", "Buttery", "Candy", "Caramel",
-        "Cheesy", "Chemical", "Cherry", "Chocolate", "Citrus", "Coffee", "Creamy",
-        "Dank", "Diesel", "Flowery", "Fruity", "Grape", "Grapefruit", "Hash",
-        "Herbal", "Honey", "Lavender", "Lemon", "Lime", "Mango", "Menthol", "Mint",
-        "Nutty", "Orange", "Peppery", "Pine", "Pineapple", "Sage", "Skunky", "Sour",
-        "Spicy", "Strawberry", "Sugary", "Sweet", "Tangy", "Tea", "Tobacco",
-        "Tropical", "Vanilla", "Woody"];
-    let aromas = ["Apple", "Banana", "Berry", "Blueberry", "Bubble Gum", "Candy", "Caramel",
-        "Cheese", "Chemical", "Cherry", "Chocolate", "Citrus", "Coffee", "Creamy",
-        "Dank", "Diesel", "Earthy", "Floral", "Flowery", "Fragrant", "Fruity", "Fuel",
-        "Grape", "Grapefruit", "Grassy", "Harsh", "Hash", "Herbal", "Kush",
-        "Lavender", "Lemon", "Lime", "Mango", "Mellow", "Mint", "Musky", "Nutty",
-        "Orange", "Pepper", "Pine", "Pineapple", "Pungent", "Sage", "Skunky", "Sour",
-        "Spicy", "Strawberry", "Sweet", "Tropical", "Vanilla", "Woody"];
+    let medical_effects = select_data.medical_effects
+    let desired_effects = select_data.desired_effects;
+    let undesired_effects = select_data.undesired_effects;
+    let flavors = select_data.flavors;
+    let aromas = select_data.aromas;
+
+    $.each(medical_effects, function(key, value){
+        $('#medical-effects')
+        .append($("<option></option>")
+                   .text(value));     
+    });
+
+    $.each(desired_effects, function(key, value){
+        $('#desired-effects')
+        .append($("<option></option>")
+                   .text(value));     
+    });
+
+    $.each(undesired_effects, function(key, value){
+        $('#undesired-effects')
+        .append($("<option></option>")
+                   .text(value));     
+    });
+
+    $.each(flavors, function(key, value){
+        $('#flavors')
+        .append($("<option></option>")
+                   .text(value));     
+    });
+
+    $.each(aromas, function(key, value){
+        $('#aromas')
+        .append($("<option></option>")
+                   .text(value));     
+    });
    
     $("#customSearch").fadeIn(500);
 
@@ -37,7 +52,7 @@ $(document).ready(function(){
             }
             else if (aromas.indexOf(word) > -1) type = "aroma";
         }
-        console.log(type);
+        
         switch(type) {
             case "medical-effect":
                 color_class = "bg-primary";
@@ -234,19 +249,7 @@ $(document).ready(function(){
     requestData.undesiredEffects = [];
     requestData.flavors = [];
     requestData.aromas = [];
-    requestData.city = "";
-    requestData.state = "";
     
-    $("#city").on("change", function() {
-        requestData.city = $(this).val();
-    });
-
-    $("#state").on("change", function() {
-        requestData.state = $(this).val();
-    });
-    
- $("#state")[0].value;
-
     // Submit request logic
     $( "#customSearch" ).submit(function( event ) {
         event.preventDefault();
@@ -270,6 +273,7 @@ $(document).ready(function(){
                 requestData.aromas.push(removeX(tag));
             }
         })
+
         console.log(requestData);
         $.post( "results-custom", JSON.stringify(requestData))
         .always(function() {
@@ -283,6 +287,9 @@ $(document).ready(function(){
             
             let count = 0;
 
+            if (data.length == 0) {
+                $("#results").append("<h1>No Results Found</h1>");
+            }
             data.forEach(function(strain){
                 console.log(strain);
                 $("#results").append('<div id="strain_'+ count +'" class="card strain-result ml-2 mr-2 mb-2 shadow">' + 
@@ -296,28 +303,58 @@ $(document).ready(function(){
                 '</div>');
                 
                 $("#strain_" + count).on("click", function() {
+
+                    $("#modal-img").empty();
+                    if (strain[1]["image"] != "https://www.cannabisreports.com/images/strains/no_image.png") {
+                        $("#modal-img").append('<img style="max-height:300px" src="' + strain[1]["image"] +'" class="rounded mb-3 img-fluid" alt="...">');
+                    }
                     $("#modal-name").text(strain[1]["name"]);
                     $("#modal-description").text(strain[1]["description"]);
-                    $("#modal-medical").text(strain[1]["medical"]);
-                    $("#modal-desired").text(strain[1]["positive"]);
-                    $("#modal-undesired").text(strain[1]["negative"]);                    
-                    $("#modal-flavors").text(strain[1]["flavors"]);
-                    $("#modal-aromas").text(strain[1]["aromas"]);
+
+                    if (strain[1]["medical"]) {
+                        $("#modal-medical").text(strain[1]["medical"].join(", "));
+                    } else {
+                        $("#modal-medical-label").hide();
+                    }
+                    
+                    if (strain[1]["positive"]) {
+                        $("#modal-desired").text(strain[1]["positive"].join(", "));
+                    } else {
+                        $("#modal-desired-label").hide();
+                    }
+
+                    if (strain[1]["negative"]) {
+                        console.log(strain[1]["negative"].length)
+                        $("#modal-undesired").text(strain[1]["negative"].join(", "));   
+                    } else {
+                        $("#modal-undesired-label").hide();
+                    }
+
+                    if (strain[1]["flavor_descriptors"]) {
+                        $("#modal-flavors").text(strain[1]["flavor_descriptors"].join(", "));
+                    } else {
+                        $("#modal-flavors-label").remove();
+                    }      
+                    
+                    if (strain[1]["aroma"]) {
+                        $("#modal-aromas").text(strain[1]["aroma"].join(", "));
+                    } else {
+                        $("#modal-aromas-label").remove();
+                    }                
+
+                    
                 });
 
                 count++;
-                // $("#results").append('<div class="card strain-result border-0 shadow mb-2"><div class="card-body">' + strain.strain_name + '</div>')
             });
             $("#loadingDiv").fadeOut();
 
-            $("#customSearch").animate({
-                width: "30%"
-            }, 500, function(){
+            $("#customSearch").addClass("col-4", 500).removeClass("col-5", function(){
                 $("#results").addClass("d-flex").show(500);
             });
 
         });
     });
 
-    
+});
 });
