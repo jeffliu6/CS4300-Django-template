@@ -398,10 +398,10 @@ def calculate_score_breakdown(score, \
         for category in categories:
             if category not in score_breakdown:
                 category_obj = {}
-                category_obj[word] = per_word_score
+                category_obj[word] = per_word_score/len(categories)
                 score_breakdown[category] = category_obj
             else:
-                score_breakdown[category][word] = per_word_score
+                score_breakdown[category][word] = per_word_score/len(categories)
 
     return score_breakdown
 
