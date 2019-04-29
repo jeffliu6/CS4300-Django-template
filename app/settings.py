@@ -149,3 +149,9 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Activate Django-Heroku.
 django_heroku.settings(locals())
+
+
+# ranking strains weights
+RATING_WEIGHT = 1/4
+DOM_TOPIC_WEIGHT = 1/8
+REMAINING_WEIGHT = 1 - RATING_WEIGHT - DOM_TOPIC_WEIGHT

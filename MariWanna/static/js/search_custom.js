@@ -24,12 +24,52 @@ $(document).ready(function(){
    
     $("#customSearch").fadeIn(500);
 
+    function addTag(word, type) {
+        let color_class = "";
+
+        if (type == "key-word") {
+            if (medical_effects.indexOf(word) > -1) type = "medical-effect";
+            else if (desired_effects.indexOf(word) > -1) type = "desired-effect";
+            else if (undesired_effects.indexOf(word) > -1) type = "undesired-effect";
+            else if (flavors.indexOf(word) > -1) {
+                type = "flavor";
+                if (aromas.indexOf(word) > -1) addTag(word, "aroma");
+            }
+            else if (aromas.indexOf(word) > -1) type = "aroma";
+        }
+        console.log(type);
+        switch(type) {
+            case "medical-effect":
+                color_class = "bg-primary";
+                break;
+            case "desired-effect":
+                color_class = "bg-success";
+                break;
+            case "undesired-effect":
+                color_class = "bg-danger";
+                break;
+            case "flavor":
+                color_class = "bg-info";
+                break;
+            case "aroma":
+                color_class = "bg-aroma";
+                break;
+            default:
+                color_class = "bg-secondary";
+        }
+
+        $('#allEffects').append("<p class=\"tag " + type + 
+            " d-inline-flex justify-content-center align-items-center shadow-sm " + 
+            "border m-1 pl-2 pr-2 text-small text-light " + color_class + 
+            " rounded\">" + word.toLowerCase() + "<span class=\"remove-btn\">x</span></p>");
+    }
+
     // Effects entry set up
     $('#key-words').keypress(function(event){
         var keycode = (event.keyCode ? event.keyCode : event.which);
         if(keycode == '13' && $(this).val()!=""){
             event.preventDefault();
-            $('#allEffects').append("<p class=\"tag key-word d-inline-flex justify-content-center align-items-center shadow-sm border m-1 pl-2 pr-2 text-small text-light bg-secondary rounded\">" + $(this).val().toLowerCase() + "<span class=\"remove-btn\">x</span></p>");
+            addTag($(this).val(), "key-word");
             $(this).val("");
         }
         $(".remove-btn").click(function() {
@@ -38,7 +78,7 @@ $(document).ready(function(){
     });
     $("#key-words-btn").click(function(){
         if ($("#key-words").val() != "") {
-            $('#allEffects').append("<p class=\"tag key-word d-inline-flex justify-content-center align-items-center shadow-sm border m-1 pl-2 pr-2 text-small text-light bg-secondary rounded\">" + $("#key-words").val().toLowerCase() + "<span class=\"remove-btn\">x</span></p>");
+            addTag($("#key-words").val(), "key-word");
             $("#key-words").val("");
             $(".remove-btn").click(function() {
                 $(this).parent().remove();
@@ -50,7 +90,7 @@ $(document).ready(function(){
         var keycode = (event.keyCode ? event.keyCode : event.which);
         if(keycode == '13' && $(this).val()!=""){
             event.preventDefault();
-            $('#allEffects').append("<p class=\"tag medical-effect d-inline-flex justify-content-center align-items-center shadow-sm border m-1 pl-2 pr-2 text-small text-light bg-primary rounded\">" + $(this).val().toLowerCase() + "<span class=\"remove-btn\">x</span></p>");
+            addTag($(this).val(), "medical-effect");
             $(this).val("");
         }
         $(".remove-btn").click(function() {
@@ -65,7 +105,7 @@ $(document).ready(function(){
     });
     $("#medical-effects-btn").click(function(){
         if ($("#medical-effects").val() != "") {
-            $('#allEffects').append("<p class=\"tag medical-effect d-inline-flex justify-content-center align-items-center shadow-sm border m-1 pl-2 pr-2 text-small text-light bg-primary rounded\">" + $("#medical-effects").val().toLowerCase() + "<span class=\"remove-btn\">x</span></p>");
+            addTag($("#medical-effects").val(), "medical-effect");
             $("#medical-effects").val("");
             $(".remove-btn").click(function() {
                 $(this).parent().remove();
@@ -77,7 +117,7 @@ $(document).ready(function(){
         var keycode = (event.keyCode ? event.keyCode : event.which);
         if(keycode == '13' && $(this).val()!=""){
             event.preventDefault();
-            $('#allEffects').append("<p class=\"tag desired-effect d-inline-flex justify-content-center align-items-center shadow-sm border m-1 pl-2 pr-2 text-small text-light bg-success rounded\">" + $(this).val().toLowerCase() + "<span class=\"remove-btn\">x</span></p>");
+            addTag($(this).val(), "desired-effect");
             $(this).val("");
         }
         $(".remove-btn").click(function() {
@@ -89,7 +129,7 @@ $(document).ready(function(){
     });
     $("#desired-effects-btn").click(function(){
         if ($("#desired-effects").val() != "") {
-            $('#allEffects').append("<p class=\"tag desired-effect d-inline-flex justify-content-center align-items-center shadow-sm border m-1 pl-2 pr-2 text-small text-light bg-success rounded\">" + $("#desired-effects").val().toLowerCase() + "<span class=\"remove-btn\">x</span></p>");
+            addTag($("#desired-effects").val(), "desired-effect");
             $("#desired-effects").val("");
             $(".remove-btn").click(function() {
                 $(this).parent().remove();
@@ -101,7 +141,7 @@ $(document).ready(function(){
         var keycode = (event.keyCode ? event.keyCode : event.which);
         if(keycode == '13' && $(this).val()!=""){
             event.preventDefault();
-            $('#allEffects').append("<p class=\"tag undesired-effect d-inline-flex justify-content-center align-items-center shadow-sm border m-1 pl-2 pr-2 text-small text-light bg-danger rounded\">" + $(this).val().toLowerCase() + "<span class=\"remove-btn\">x</span></p>");
+            addTag($(this).val(), "undesired-effect");
             $(this).val("");
         }
         $(".remove-btn").click(function() {
@@ -113,7 +153,7 @@ $(document).ready(function(){
     });
     $("#undesired-effects-btn").click(function(){
         if ($("#undesired-effects").val() != "") {
-            $('#allEffects').append("<p class=\"tag undesired-effect d-inline-flex justify-content-center align-items-center shadow-sm border m-1 pl-2 pr-2 text-small text-light bg-danger rounded\">" + $("#undesired-effects").val().toLowerCase() + "<span class=\"remove-btn\">x</span></p>");
+            addTag($("#undesired-effects").val(), "undesired-effect");
             $("#undesired-effects").val("");
             $(".remove-btn").click(function() {
                 $(this).parent().remove();
@@ -125,7 +165,7 @@ $(document).ready(function(){
         var keycode = (event.keyCode ? event.keyCode : event.which);
         if(keycode == '13' && $(this).val()!=""){
             event.preventDefault();
-            $('#allEffects').append("<p class=\"tag flavor d-inline-flex justify-content-center align-items-center shadow-sm border m-1 pl-2 pr-2 text-small text-light bg-info rounded\">" + $(this).val().toLowerCase() + "<span class=\"remove-btn\">x</span></p>");
+            addTag($(this).val(), "flavor");
             $(this).val("");
         }
         $(".remove-btn").click(function() {
@@ -137,7 +177,7 @@ $(document).ready(function(){
     });
     $("#flavors-btn").click(function(){
         if ($("#flavors").val() != "") {
-            $('#allEffects').append("<p class=\"tag flavor d-inline-flex justify-content-center align-items-center shadow-sm border m-1 pl-2 pr-2 text-small text-light bg-info rounded\">" + $("#flavors").val().toLowerCase() + "<span class=\"remove-btn\">x</span></p>");
+            addTag($("#flavors").val(), "flavor");
             $("#flavors").val("");
             $(".remove-btn").click(function() {
                 $(this).parent().remove();
@@ -149,7 +189,7 @@ $(document).ready(function(){
         let keycode = (event.keyCode ? event.keyCode : event.which);
         if(keycode == '13' && $(this).val()!=""){
             event.preventDefault();
-            $('#allEffects').append("<p class=\"tag aroma d-inline-flex justify-content-center align-items-center shadow-sm border m-1 pl-2 pr-2 text-small text-light rounded\">" + $(this).val().toLowerCase() + "<span class=\"remove-btn\">x</span></p>");
+            addTag($(this).val(), "aroma");
             $(this).val("");
         }
         $(".remove-btn").click(function() {
@@ -162,7 +202,7 @@ $(document).ready(function(){
     });
     $("#aromas-btn").click(function(){
         if ($("#aromas").val() != "") {
-            $('#allEffects').append("<p class=\"tag aroma d-inline-flex justify-content-center align-items-center shadow-sm border m-1 pl-2 pr-2 text-small text-light rounded\">" + $("#aromas").val().toLowerCase() + "<span class=\"remove-btn\">x</span></p>");
+            addTag($("#aromas").val(), "aroma");
             $("#aromas").val("");
             $(".remove-btn").click(function() {
                 $(this).parent().remove();
@@ -216,18 +256,15 @@ $(document).ready(function(){
         requestData.flavors = [];
         requestData.aromas = [];
         $("#allEffects").children().each(function(){
-            let effect = $(this).text();
-            if ($(this).hasClass("medical-effect")) {
-                requestData.medicalEffects.push(removeX(effect));
-            } else if ($(this).hasClass("desired-effect")) {
-                requestData.desiredEffects.push(removeX(effect));
-            } else {
-                requestData.undesiredEffects.push(removeX(effect));
-            }
-        });
-        $("#allFlavors").children().each(function() {
             let tag = $(this).text();
-            if ($(this).hasClass("flavor")) {
+            
+            if ($(this).hasClass("medical-effect")) {
+                requestData.medicalEffects.push(removeX(tag));
+            } else if ($(this).hasClass("desired-effect")) {
+                requestData.desiredEffects.push(removeX(tag));
+            } else if ($(this).hasClass("undesired-effect")) {
+                requestData.undesiredEffects.push(removeX(tag));
+            } else if ($(this).hasClass("flavor")) {
                 requestData.flavors.push(removeX(tag));
             } else {
                 requestData.aromas.push(removeX(tag));
@@ -243,9 +280,7 @@ $(document).ready(function(){
             data = JSON.parse(data);
             
             $('#results').empty();
-            // $("#results").children().fadeOut(500, function() {
-            //     $('#results').empty();
-            // });
+            
             let count = 0;
 
             data.forEach(function(strain){
