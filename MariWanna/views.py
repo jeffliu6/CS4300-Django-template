@@ -196,51 +196,14 @@ def similar_results(request):
 
         score = rating_score + categories_score
 
-        score_breakdown = {}
-        score_breakdown['rating'] = rating_score/score
+        keywords_score, search_strength = None, None
+        score_breakdown = calculate_score_breakdown(score, \
+            score_categories_breakdown_lst, rating_score, \
+            categories_score, keywords_score, search_strength)
 
-        per_word_score = categories_score/score/len(score_categories_breakdown_lst)
-        for word in score_categories_breakdown_lst:
-            score_breakdown[word] = per_word_score
         scoring.append((score, curr_strain, score_breakdown))
 
-    sorted_strains = sorted(scoring, key=lambda tup: tup[0], reverse=True)
-    top_ten = sorted_strains[1:50] #skip the first so you don't return the searched strain
-
-    top_ten_final = []
-    for sim_tup in top_ten:
-        sim_score = sim_tup[0]
-        sim_strain = sim_tup[1]
-        score_breakdown = sim_tup[2]
-
-        matched_values = []
-        matched_vector =[]
-        for index in range(len(sim_strain['vector'])):
-            matched_vector.append((sim_strain['vector'])[index] + (current_strain_data['vector'])[index])
-
-        matched_vector = matched_vector[:-1]
-
-        inverse_categories= {}
-        with open('./data/inverse_categories.json', encoding="utf8") as f:
-            inverse_categories = json.loads(f.read())
-
-        for index in range(len(matched_vector)):
-            if matched_vector[index] > 1:
-                matched_factor = keys_vector[index]
-                matched_values.append(matched_factor)
-
-        final_matched_lst = {}
-        for value in matched_values:
-            curr_category = (inverse_categories[value])[0]
-            if curr_category in final_matched_lst:
-                final_matched_lst[curr_category] = final_matched_lst[curr_category] + [value]
-            else:
-                final_matched_lst[curr_category] = [value]
-        top_ten_final.append((sim_score, sim_strain, final_matched_lst, score_breakdown))
-
-
-    sorted_strains_final = sorted(top_ten_final, key=lambda tup: tup[0], reverse=True)
-
+    sorted_strains_final = sorted(scoring, key=lambda tup: tup[0], reverse=True)[1:50] #skip the first so you don't return the searched strain
     return HttpResponse(json.dumps(sorted_strains_final))
 
 
@@ -385,7 +348,8 @@ def rank_strains(search_vectors, search_strain, relv_search, dom_topic, search_s
 
         cos_sim = cosine_sim(array(search_strain), array(curr_array))
         if search_strength == None:
-            categories_score = (settings.REMAINING_WEIGHT + (1/8)) * cos_sim
+            # add strength weight back in if it doesn't exist
+            categories_score = (settings.REMAINING_WEIGHT + settings.STRENGTH_WEIGHT) * cos_sim
             score = rating_score + keywords_score + categories_score
         else:
             categories_score = settings.REMAINING_WEIGHT * cos_sim
@@ -393,65 +357,53 @@ def rank_strains(search_vectors, search_strain, relv_search, dom_topic, search_s
             strength_score = settings.STRENGTH_WEIGHT * strength_score_diff
             score = rating_score + keywords_score + strength_score + categories_score
 
-        score_breakdown = {}
-        score_breakdown['rating'] = rating_score/score
-        score_breakdown['keywords'] = 0 if keywords_score == 0 else keywords_score/score
-        score_breakdown['strength'] = 0 if search_strength == None else strength_score/score
+        score_breakdown = calculate_score_breakdown(score, \
+            score_categories_breakdown_lst, rating_score, \
+            categories_score, keywords_score, search_strength)
 
-        per_word_score = categories_score/score/len(score_categories_breakdown_lst)
-        for word in score_categories_breakdown_lst:
-            score_breakdown[word] = per_word_score
 
         scoring.append((score, curr_strain, score_breakdown))
 
-    sorted_strains = sorted(scoring, key=lambda tup: tup[0], reverse=True)
-    expanded_search_vector = [0] * 147
-    for tup in relv_search:
-        index = tup[0]
-        expanded_search_vector[index] = 1
-
-    data = sorted_strains
-
-    keys = {}
-    with open('./data/keys_vector.json', encoding="utf8") as f:
-        keys = json.loads(f.read())
-
-    top_ten_final = []
-    for sim_tup in data:
-        sim_score = sim_tup[0]
-        sim_strain = sim_tup[1]
-        score_breakdown = sim_tup[2]
-
-        matched_values = []
-        matched_vector =[]
-        for index in range(len(sim_strain['vector'])):
-            matched_vector.append((sim_strain['vector'])[index] + (expanded_search_vector)[index])
-
-        matched_vector = matched_vector[:-1]
+    return sorted(scoring, key=lambda tup: tup[0], reverse=True)
 
 
-        inverse_categories= {}
-        with open('./data/inverse_categories.json', encoding="utf8") as f:
-            inverse_categories = json.loads(f.read())
+def calculate_score_breakdown(score, \
+    score_categories_breakdown_lst, rating_score, \
+    categories_score, keywords_score, search_strength):
+    '''
+        return score object
+        {
+            'rating': .3,
+            'strength': .2,
+            'keywords': .2,
+            'flavors': {
+                'cherry': .15,
+                'sage': .15
+            }
 
-        for index in range(len(matched_vector)):
-            if matched_vector[index] > 1:
-                matched_factor = keys[index]
-                matched_values.append(matched_factor)
+        }
+    '''
+    score_breakdown = {}
+    score_breakdown['rating'] = rating_score/score
+    score_breakdown['keywords'] = 0 if (keywords_score is None or keywords_score == 0) else keywords_score/score
+    score_breakdown['strength'] = 0 if search_strength is None else strength_score/score
 
-        final_matched_lst = {}
-        for value in matched_values:
-            curr_category = (inverse_categories[value])[0]
-            if curr_category in final_matched_lst:
-                final_matched_lst[curr_category] = final_matched_lst[curr_category] + [value]
+    inverse_categories= {}
+    with open('./data/inverse_categories.json', encoding="utf8") as f:
+        inverse_categories = json.loads(f.read())
+
+    per_word_score = categories_score/score/len(score_categories_breakdown_lst)
+    for word in score_categories_breakdown_lst:
+        categories = inverse_categories[word]
+        for category in categories:
+            if category not in score_breakdown:
+                category_obj = {}
+                category_obj[word] = per_word_score/len(categories)
+                score_breakdown[category] = category_obj
             else:
-                final_matched_lst[curr_category] = [value]
-        top_ten_final.append((sim_score, sim_strain, final_matched_lst, score_breakdown))
+                score_breakdown[category][word] = per_word_score/len(categories)
 
-
-    sorted_strains_final = sorted(top_ten_final, key=lambda tup: tup[0], reverse=True)
-    return sorted_strains_final
-
+    return score_breakdown
 
 
 @csrf_exempt
@@ -487,10 +439,7 @@ def custom_results(request):
     search_vectors = names_to_vectors(strain_names)
     strength = search_obj['strength']
 
-
     strain_ranks = rank_strains(search_vectors, search_strain, relv_search, dom_topic, strength, keys_vector)
-    for strain in strain_ranks:
-        print(strain)
 
     return HttpResponse(json.dumps(strain_ranks))
 
@@ -514,7 +463,6 @@ def search_to_vector(input, keys_vector):
     vector_list_1 = input['positive'] + input['negative_effects'] + \
         input['medical'] + input['aroma'] + input['flavor_descriptors']
     vector_list = [x.lower() for x in vector_list_1]
-
     cond_vector = [1 if key in vector_list else 0 for key in keys_vector]
     cond_vector.append(1) #always include rating
     return array(cond_vector)

@@ -67,7 +67,41 @@ def generate_strainname_to_vector_dict():
         json.dump(vector_dict, outfile)
 
 
+def keys_to_category_and_index():
+    '''
+        find all keys so we can use them to generate a vector of binaries
+    '''
+    input_data = {}
+    with open('../data/combined_cleaned_data.json') as f:
+        input_data = json.load(f)
+
+    # combine description and reviews
+    positive = set()
+    negative = set()
+    medical = set()
+    aroma = set()
+    flavor = set()
+    #'positive', 'medical', 'aroma', 'flavor_descriptors',  'negative_effects'
+
+    for input in input_data:
+        for pos in input['positive']:
+            positive.add(pos)
+        for neg in input['negative_effects']:
+            negative.add(neg)
+        for med in input['medical']:
+            medical.add(med)
+        for aro in input['aroma']:
+            aroma.add(aro)
+        for flav in input['flavor_descriptors']:
+            flavor.add(flav)
+
+    union_set = list(positive.union(negative).union(medical).union(aroma).union(flavor))
+    with open('../data/keys_vector.json', 'w') as f:
+        json.dump(union_set, f)
+
+
 if __name__ == "__main__":
     # get_all_categories()
     # reverse_categories()
-    generate_strainname_to_vector_dict()
+    # generate_strainname_to_vector_dict()
+    keys_to_category_and_index()
