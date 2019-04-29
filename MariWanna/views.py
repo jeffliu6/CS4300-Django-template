@@ -65,7 +65,7 @@ def perform_signin(request):
     user_data = find_user_data(signin_info)
     is_user_in_db = is_user_existent(user_data)
     return HttpResponse(json.dumps(is_user_in_db))
-    
+
 def convert_to_dictionary(request):
     request_keys = request.POST.keys()
     request_as_json = list(request_keys)[0]
@@ -341,6 +341,56 @@ def rank_strains(search_vectors, search_strain, relv_search, dom_topic, search_s
         scoring.append((score, curr_strain, curr_strain['name']))
 
     sorted_strains = sorted(scoring, key=lambda tup: tup[0], reverse=True)
+    expanded_search_vector = [0] * 147
+    for tup in relv_search:
+        index = tup[0]
+        expanded_search_vector[index] = 1
+
+    data = sorted_strains
+
+    keys = {}
+    with open('./data/keys_vector.json', encoding="utf8") as f:
+        keys = json.loads(f.read())
+
+    top_ten_final = []
+    for sim_tup in data:
+        sim_score = sim_tup[0]
+        sim_strain = sim_tup[1]
+
+        matched_values = []
+        matched_vector =[]
+        for index in range(len(sim_strain['vector'])):
+            matched_vector.append((sim_strain['vector'])[index] + (expanded_search_vector)[index])
+
+        matched_vector = matched_vector[:-1]
+
+
+        inverse_categories= {}
+        with open('./data/inverse_categories.json', encoding="utf8") as f:
+            inverse_categories = json.loads(f.read())
+
+        for index in range(len(matched_vector)):
+            if matched_vector[index] > 1:
+                matched_factor = keys[index]
+                matched_values.append(matched_factor)
+
+        final_matched_lst = {}
+        for value in matched_values:
+            curr_category = (inverse_categories[value])[0]
+            if curr_category in final_matched_lst:
+                final_matched_lst[curr_category] = final_matched_lst[curr_category] + [value]
+            else:
+                final_matched_lst[curr_category] = [value]
+        top_ten_final.append((sim_score, sim_strain, final_matched_lst))
+
+
+    sorted_strains_final = sorted(top_ten_final, key=lambda tup: tup[0], reverse=True)
+    for sti in sorted_strains_final:
+        print(sti[2])
+
+
+
+
 
     #return top 10
     return sorted_strains[:9]

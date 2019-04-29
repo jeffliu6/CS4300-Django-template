@@ -491,6 +491,19 @@ def add_dominant_topic():
         json.dump(all_data, outfile)
 
 
+def get_strain_names():
+    all_data = {}
+    with open('../data/combined_cleaned_data.json', encoding="utf8") as f:
+        all_data = json.load(f)
+
+    names_list = []
+    for data in all_data:
+        names_list.append(data['name'])
+
+    with open('../data/strain_names.json', 'w') as outfile:
+        json.dump(names_list, outfile)
+
+
 
 def run_all():
     combine_all_data()
@@ -508,3 +521,4 @@ if __name__ == "__main__":
     #combine_data()
 
     run_all()
+    # get_strain_names()
