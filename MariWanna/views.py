@@ -10,6 +10,7 @@ from numpy import array, dot
 from numpy.linalg import norm
 from random import shuffle
 from django.conf import settings
+import pybase64
 
 
 import sys
@@ -23,6 +24,14 @@ medical_effects_key = 'medical'
 aromas_key = 'aroma'
 flavors_key = 'flavor_descriptors'
 keywords_key = 'keywords'
+
+@csrf_exempt
+def login(request):
+    return render_to_response('login.html')
+
+@csrf_exempt
+def create_account(request):
+    return render_to_response('create_account.html')
 
 @csrf_exempt
 def home(request):
@@ -48,7 +57,63 @@ def cosine_sim(a, b):
     return cos
 
 @csrf_exempt
+def perform_signin(request):
+    signin_info = convert_to_dictionary(request)
+    user_data = find_user_data(signin_info)
+    is_user_in_db = is_user_existent(user_data)
+    return HttpResponse(json.dumps(is_user_in_db))
+    
+def convert_to_dictionary(request):
+    request_keys = request.POST.keys()
+    request_as_json = list(request_keys)[0]
+    return (json.loads(request_as_json))
+
+def find_user_data(signin_info):
+    email = signin_info['email']
+    hashed_password = hash_password(signin_info['password'])
+    query_to_find_user = create_query_to_find_user(email, hashed_password)
+    return db.execute_select_statement(query_to_find_user)
+
+def create_query_to_find_user(email, hashed_password):
+    query = "SELECT * FROM users WHERE email = '{email}' \
+            AND password='{hashed_password}' LIMIT 1".format(email=email, hashed_password=hashed_password)
+    return query
+
+def is_user_existent(user_data):
+    return len(user_data) > 0
+
+def unhash_password(hashed_password):
+    hashed_password_as_bytes = hashed_password.encode('utf-8')
+    unhashed_password_as_bytes = pybase64.b64decode(hashed_password_as_bytes, altchars='_:', validate=True)
+    unhashed_password = unhashed_password_as_bytes.decode('utf-8')
+    return unhashed_password
+
+@csrf_exempt
+def enter_user(request):
+    signin_info = convert_to_dictionary(request)
+    insert_user_to_db(signin_info)
+    return render_to_response('home.html')
+
+def insert_user_to_db(signin_info):
+    email = signin_info['email']
+    hashed_password = hash_password(signin_info['password'])
+    insert_new_user_query = create_query_for_new_user(email, hashed_password)
+    db.execute_insert_statement(insert_new_user_query)
+    return render_to_response('home.html')
+
+def hash_password(password):
+    password_as_bytes = password.encode('utf-8')
+    hashed_password = (pybase64.b64encode(password_as_bytes, altchars='_:'))
+    hashed_password_as_string = hashed_password.decode('utf-8')
+    return hashed_password_as_string
+
+def create_query_for_new_user(email, hashed_password):
+    return ("INSERT INTO users (email, password) \
+        VALUES ('{email}', '{password}')".format(email=email, password=hashed_password))
+
+@csrf_exempt
 def similar_results(request):
+    print("HI JEFF")
     RATING_WEIGHT = 1/4
     REMAINING_WEIGHT = 1 - RATING_WEIGHT
 
