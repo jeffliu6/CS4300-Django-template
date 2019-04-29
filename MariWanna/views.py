@@ -17,6 +17,13 @@ sys.path.append('../../scripts')
 import scripts.database_connection as db
 from .forms import SearchForm
 
+positive_effects_key = 'positive'
+negative_effects_key = 'negative_effects'
+medical_effects_key = 'medical'
+aromas_key = 'aroma'
+flavors_key = 'flavor_descriptors'
+keywords_key = 'keywords'
+
 @csrf_exempt
 def home(request):
     return render_to_response('home.html')
@@ -165,31 +172,29 @@ def parse_search(data, keys_vector):
         if term in categories['flavor']:
             flavor_lst.append(term)
 
-    draft_keyword_lst = data.get("keyword")
+    keyword_lst = data.get("keyword")
     if keyword_lst == None:
         keyword_lst = []
-
-    # state = data.get('state')
-    # city = data.get('city')
-    # strength = data.get('strength')
-
-    #determine valid keys
     valid_key_lst = []
     for keyword in keyword_lst:
         if keyword in keys_vector:
             valid_key_lst.append(keyword.lower().strip())
 
+    # state = data.get('state')
+    # city = data.get('city')
+    # strength = data.get('strength')
+
     #if input is just gibberish return None
     if len(positive_lst) + len(negative_lst) + len(medical_lst) + \
-        len(aromas_lst) + len(flavors_lst) + len(valid_key_lst) == 0:
+        len(aroma_lst) + len(flavor_lst) + len(valid_key_lst) == 0:
         return None
 
     return {
         'positive': positive_lst,
         'negative_effects': negative_lst,
         'medical': medical_lst,
-        'aroma': aromas_lst,
-        'flavor_descriptors': flavors_lst,
+        'aroma': aroma_lst,
+        'flavor_descriptors': flavor_lst,
         'keywords': valid_key_lst
     }
 
@@ -219,6 +224,7 @@ def get_rel_search(search_strain_vector):
             search_strain.append(1)
             relv_search.append((index, search_strain_vector[index]))
     return search_strain, relv_search
+
 
 def rank_strains(data, search_strain, relv_search, dom_topic):
     scoring = []
@@ -266,17 +272,18 @@ def custom_results(request):
     search_strain_vector = search_to_vector(search_obj, keys_vector)
 
     # get list of strains from SQL database
-    # data = get_stuff_from_fred()
+    strain_names = find_relevant_strains(search_obj)
+    print(strain_names)
 
-    #finding the relevant dimensions to run cosine sim on
-    search_strain, relv_search = get_rel_search(search_strain_vector)
-
-    #get dominant topic
-    dom_topic = get_dom_topic(search_obj)
-
-    output = rank_strains(data, search_strain, relv_search, dom_topic)
-
-    return HttpResponse(json.dumps(output))
+    # #finding the relevant dimensions to run cosine sim on
+    # search_strain, relv_search = get_rel_search(search_strain_vector)
+    #
+    # #get dominant topic
+    # dom_topic = get_dom_topic(search_obj)
+    #
+    # output = rank_strains(data, search_strain, relv_search, dom_topic)
+    #
+    # return HttpResponse(json.dumps(output))
 
 
 def search_to_vector(input, keys_vector):
@@ -287,3 +294,42 @@ def search_to_vector(input, keys_vector):
     cond_vector = [1 if key in vector_list else 0 for key in keys_vector]
     cond_vector.append(1) #always include rating
     return array(cond_vector)
+
+
+def find_relevant_strains(search_keys):
+    query_for_strain_names = create_db_query_for_strain_names(search_keys)
+    raw_strain_names_results = db.execute_select_statement(query_for_strain_names)
+    strain_names = [record[0] for record in raw_strain_names_results]
+    return strain_names
+
+
+def create_db_query_for_strain_names(search_keys):
+    keys_for_db = get_db_keys(search_keys)
+    query_for_strain_names = "SELECT strain_name, {sum_all_db_keys} as strain_score \
+        FROM strain_vectors \
+        WHERE {sum_all_db_keys} > 0 \
+        ORDER BY strain_score DESC \
+        LIMIT 50".format(sum_all_db_keys = " + ".join(keys_for_db))
+
+    return query_for_strain_names
+
+def get_db_keys(search_keys):
+    all_keys = concatenate_all_keys_from(search_keys)
+    keys_for_db = []
+    for key in all_keys:
+        formatted_key = format_key_to_db_key(key)
+        keys_for_db.append(formatted_key)
+    return keys_for_db
+
+def concatenate_all_keys_from(search_keys):
+    key_categories = [positive_effects_key, negative_effects_key, medical_effects_key, aromas_key, flavors_key]
+    keys_concatenated = []
+    for key_category in key_categories:
+        keys_concatenated += search_keys[key_category]
+
+    return keys_concatenated
+
+def format_key_to_db_key(key):
+    key = key.replace("'", "")
+    key = key.replace("/", "_")
+    return "is_" + key.replace(" ", "_")

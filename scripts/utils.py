@@ -48,7 +48,10 @@ def reverse_categories():
     with open('../data/inverse_categories.json', 'w') as outfile:
         json.dump(inverse_dict, outfile)
 
+def generate_strainname_to_vector_dict():
+
 
 if __name__ == "__main__":
     # get_all_categories()
-    reverse_categories()
+    # reverse_categories()
+    generate_strainname_to_vector_dict()
