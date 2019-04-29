@@ -24,6 +24,9 @@ medical_effects_key = 'medical'
 aromas_key = 'aroma'
 flavors_key = 'flavor_descriptors'
 keywords_key = 'keywords'
+MAX_THC = 34.0
+MIN_THC = 1.0
+MEAN_THC = 19.092282784673504
 
 @csrf_exempt
 def login(request):
@@ -247,7 +250,8 @@ def parse_search(data, keys_vector):
 
     # state = data.get('state')
     # city = data.get('city')
-    # strength = data.get('strength')
+    strength = data.get('strength')
+
 
     #if input is just gibberish return None
     if len(positive_lst) + len(negative_lst) + len(medical_lst) + \
@@ -260,7 +264,8 @@ def parse_search(data, keys_vector):
         'medical': medical_lst,
         'aroma': aroma_lst,
         'flavor_descriptors': flavor_lst,
-        'keywords': valid_key_lst
+        'keywords': valid_key_lst,
+        'strength': strength
     }
 
 
@@ -290,8 +295,25 @@ def get_rel_search(search_strain_vector):
             relv_search.append((index, search_strain_vector[index]))
     return search_strain, relv_search
 
+def calculate_strength_diff(search_strength, curr_strain):
+    curr_thc = 0
+    if 'percentages' in curr_strain and 'THC' in curr_strain['percentages']:
+            curr_thc = curr_strain['percentages']['THC']
+    else:
+        curr_thc = str(MEAN_THC)
+    curr = curr_thc.split("%")
+    curr_thc = (curr[0])
+    scaled_search_strength = float(search_strength) / MAX_THC
+    scaled_curr_strength = float(curr_thc) / MAX_THC
+    divsor = scaled_search_strength
+    if scaled_search_strength == 0:
+        divsor = 1
+    compare =  -1 *(abs(scaled_search_strength-scaled_curr_strength)/ divsor)
 
-def rank_strains(search_vectors, search_strain, relv_search, dom_topic):
+    return compare
+
+
+def rank_strains(search_vectors, search_strain, relv_search, dom_topic, search_strength):
     scoring = []
     for i in range(len(search_vectors)):
         curr_strain = search_vectors[i]
@@ -303,9 +325,19 @@ def rank_strains(search_vectors, search_strain, relv_search, dom_topic):
             curr_array.append(curr_value)
         cos_sim = cosine_sim(array(search_strain), array(curr_array))
         rating = float(curr_strain['rating'])/5
-        score = settings.RATING_WEIGHT * (cos_sim*rating) + \
-            settings.DOM_TOPIC_WEIGHT * (1 if curr_strain['dominant_topic'] == int(dom_topic) else 0) + \
-            settings.REMAINING_WEIGHT * cos_sim
+        score = 0
+        if search_strength == None:
+            score = settings.RATING_WEIGHT * (rating) + \
+                settings.DOM_TOPIC_WEIGHT * (1 if curr_strain['dominant_topic'] == int(dom_topic) else 0) + \
+                settings.REMAINING_WEIGHT * cos_sim
+        else:
+            strength_score_diff = calculate_strength_diff(search_strength, curr_strain)
+            print(strength_score_diff)
+            score = settings.RATING_WEIGHT * (rating) + \
+                settings.DOM_TOPIC_WEIGHT * (1 if curr_strain['dominant_topic'] == int(dom_topic) else 0) + \
+                settings.STRENGTH_WEIGHT * (strength_score_diff) + \
+                ((settings.REMAINING_WEIGHT - (1/8)) * cos_sim)
+
         scoring.append((score, curr_strain, curr_strain['name']))
 
     sorted_strains = sorted(scoring, key=lambda tup: tup[0], reverse=True)
@@ -346,8 +378,10 @@ def custom_results(request):
     #get dominant topic
     dom_topic = get_dom_topic(search_obj)
     search_vectors = names_to_vectors(strain_names)
+    strength = search_obj['strength']
 
-    strain_ranks = rank_strains(search_vectors, search_strain, relv_search, dom_topic)
+
+    strain_ranks = rank_strains(search_vectors, search_strain, relv_search, dom_topic, strength)
 
     return HttpResponse(json.dumps(strain_ranks))
 
