@@ -167,7 +167,7 @@ def custom_results(request):
 
     # get strain and determine valid search
     search_obj = parse_search(user_request, keys_vector)
-
+    
     #if no inputs or gibberish inputs in keywords only
     if search_obj is None:
         return HttpResponse(json.dumps([]))
