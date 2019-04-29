@@ -384,10 +384,11 @@ def rank_strains(search_vectors, search_strain, relv_search, dom_topic, search_s
         keywords_score = settings.DOM_TOPIC_WEIGHT * (1 if (dom_topic is not None and curr_strain['dominant_topic'] == int(dom_topic)) else 0)
 
         cos_sim = cosine_sim(array(search_strain), array(curr_array))
-        categories_score = settings.REMAINING_WEIGHT * cos_sim
         if search_strength == None:
+            categories_score = (settings.REMAINING_WEIGHT + (1/8)) * cos_sim
             score = rating_score + keywords_score + categories_score
         else:
+            categories_score = settings.REMAINING_WEIGHT * cos_sim
             strength_score_diff = calculate_strength_diff(search_strength, curr_strain)
             strength_score = settings.STRENGTH_WEIGHT * strength_score_diff
             score = rating_score + keywords_score + strength_score + categories_score
@@ -488,6 +489,8 @@ def custom_results(request):
 
 
     strain_ranks = rank_strains(search_vectors, search_strain, relv_search, dom_topic, strength, keys_vector)
+    for strain in strain_ranks:
+        print(strain)
 
     return HttpResponse(json.dumps(strain_ranks))
 
