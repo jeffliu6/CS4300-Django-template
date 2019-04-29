@@ -6,7 +6,7 @@
 
 {% block content %}
 <div class="d-flex justify-content-center">
-    <div id="customSearch" >
+    <div id="customSearch" class="col-5">
         
     <form class="pl-5 pr-5 pt-5 pb-4 mt-4 mb-4 shadow rounded bg-light">
         <h3 class="pb-3">Custom Strain Search</h3>
@@ -15,17 +15,18 @@
                 <div class="d-flex align-items-center justify-content-between pb-2">
                     <label class="m-0 w-50" for="key-words">Key Words:</label>
                     <div class="input-group">
-                        <input class="form-control w-75" id="key-words" placeholder="eg. Body High">
+                        <input class="form-control w-75" id="key-words">
                         <div class="input-group-append">
                             <button class="btn btn-secondary" id="key-words-btn" type="button">Add</button>
                         </div>
                     </div>
                 </div>
-                <hr/>
                 <div class="d-flex align-items-center justify-content-between pb-2">
                     <label class="m-0 w-50" for="medical-effects">Medical Effects:</label>
                     <div class="input-group">
-                        <input class="form-control w-75" id="medical-effects" placeholder="eg. Anxiety">
+                        <select class="custom-select w-75" id="medical-effects">
+                            <option value="" default>Select</option>
+                        </select>
                         <div class="input-group-append">
                             <button class="btn btn-primary" id="medical-effects-btn" type="button">Add</button>
                         </div>
@@ -34,7 +35,9 @@
                 <div class="d-flex align-items-center justify-content-between pb-2">
                     <label for="desired-effects" class="m-0 w-50">Desired Effects:</label>
                     <div class="input-group">
-                        <input class="form-control w-75" id="desired-effects" placeholder="eg. Euphoria">
+                        <select class="custom-select w-75" id="desired-effects" placeholder="eg. Euphoria">
+                            <option value="" default>Select</option>
+                        </select>
                         <div class="input-group-append">
                             <button class="btn btn-success" id="desired-effects-btn" type="button">Add</button>
                         </div>
@@ -43,7 +46,9 @@
                 <div class="d-flex align-items-center justify-content-between pb-2">
                     <label for="undesired-effects" class="m-0 w-50">Undesired Effects:</label>
                     <div class="input-group">
-                        <input class="form-control w-75" id="undesired-effects" placeholder="eg. Dry Eyes">
+                        <select class="custom-select w-75" id="undesired-effects" placeholder="eg. Dry Eyes">
+                            <option value="" default>Select</option>
+                        </select>
                         <div class="input-group-append">
                             <button class="btn btn-danger" id="undesired-effects-btn" type="button">Add</button>
                         </div>
@@ -52,7 +57,9 @@
                 <div class="d-flex align-items-center justify-content-between pb-2">
                     <label class="m-0 w-50" for="flavors">Flavors:</label>
                     <div class="input-group">
-                        <input class="form-control w-75" id="flavors" placeholder="eg. Cherry">
+                        <select class="custom-select w-75" id="flavors" placeholder="eg. Cherry">
+                            <option value="" default>Select</option>
+                        </select>
                         <div class="input-group-append">
                             <button class="btn btn-info" id="flavors-btn" type="button">Add</button>
                         </div>
@@ -61,7 +68,9 @@
                 <div class="d-flex align-items-center justify-content-between pb-2">
                     <label class="m-0 w-50" for="aromas">Aromas:</label>
                     <div class="input-group">
-                        <input class="form-control w-75" id="aromas" placeholder="eg. Skunky">
+                        <select class="custom-select w-75" id="aromas" placeholder="eg. Skunky">
+                            <option value="" default>Select</option>
+                        </select>
                         <div class="input-group-append">
                             <button class="btn btn-aromas" id="aromas-btn" type="button">Add</button>
                         </div>
@@ -74,13 +83,6 @@
             <label for="strengthRange">Strength: <span id="strengthValue">50</span>%</label>
             <div id="strengthRange" class="mb-3"></div>
 
-            <div class="d-flex justify-content-between align-items-center pb-2">
-                <label class="pr-2 m-0" for="city">City:</label>
-                <input class="form-control mr-3" id="city" placeholder="Boca Raton">
-                <label class="pr-2 m-0" for="state">State:</label>
-                <input class="form-control w-25" id="state" placeholder="FL">
-            </div>
-
         </div>
         <div class="d-flex justify-content-center">
             <button id="search-btn" type="submit" class="btn btn-dark">Search</button>
@@ -90,7 +92,7 @@
     </form>
     <!-- Modal -->
 <div class="modal fade" id="exampleModalLong" tabindex="-1" role="dialog" aria-labelledby="modal-name" aria-hidden="true">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog modal-lg" role="document">
           <div class="modal-content">
             <div class="modal-header">
               <h5 class="modal-title" id="modal-name">Modal title</h5>
@@ -98,13 +100,24 @@
                 <span aria-hidden="true">&times;</span>
               </button>
             </div>
-            <div class="modal-body">
-                <p id="modal-description"></p>
-                <p id="modal-medical"></p>
-                <p id="modal-desired"></p>
-                <p id="modal-undesired"></p>
-                <p id="modal-flavors"></p>
-                <p id="modal-aromas"></p>             
+            <div class="modal-body d-flex">
+                <div id="modal-left" class="w-50 float-left">
+                    <p id="modal-description" class="overflow-auto text-small"></p>    
+                </div>
+                <div id="modal-right" class="w-50 float-right ml-3">
+                    <div id="modal-img"></div>
+                    <b id="modal-medical-label">Medical conditions targeted:</b>
+                    <p id="modal-medical"></p>
+                    <b id="modal-desired-label">Desired Effects:</b>
+                    <p id="modal-desired"></p>
+                    <b id="modal-undesired-label">Negative Effects:</b>
+                    <p id="modal-undesired"></p>
+                    <b id="modal-flavors-label">Available Flavors:</b>
+                    <p id="modal-flavors"></p>
+                    <b id="modal-aromas-label">Aromas:</b>
+                    <p id="modal-aromas"></p> 
+                </div>
+        
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
@@ -114,7 +127,7 @@
       </div>
 </div>
     <script>$("#customSearch").hide();</script>
-    <div id="results" class="mt-4 ml-3 mb-3 flex-wrap justify-content-center">
+    <div id="results" class="col- 6 mt-4 mb-3 flex-wrap justify-content-center">
         
     </div>
     <script>$("#results").hide();</script>
