@@ -49,6 +49,22 @@ def reverse_categories():
         json.dump(inverse_dict, outfile)
 
 def generate_strainname_to_vector_dict():
+    all_data = {}
+    with open('../data/combined_cleaned_data.json', encoding="utf8") as f:
+        all_data = json.load(f)
+
+    vector_dict = {}
+    for datum in all_data:
+        vector_dict[datum['name']] = datum
+        # vector_dict[datum['name']] = {
+        #     'vector': datum['vector'],
+        #     'rating': datum['rating'],
+        #     'dominant_topic': datum['dominant_topic'],
+        #     'name': datum['name']
+        # }
+
+    with open('../data/strain_to_vector.json', 'w') as outfile:
+        json.dump(vector_dict, outfile)
 
 
 if __name__ == "__main__":

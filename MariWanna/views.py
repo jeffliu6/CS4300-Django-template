@@ -218,21 +218,22 @@ def get_rel_search(search_strain_vector):
     return search_strain, relv_search
 
 
-def rank_strains(data, search_strain, relv_search, dom_topic):
+def rank_strains(search_vectors, search_strain, relv_search, dom_topic):
     scoring = []
-    for i in range(len(data)):
-        curr_strain = data[i]
+    for i in range(len(search_vectors)):
+        curr_strain = search_vectors[i]
+        curr_vector = curr_strain['vector']
         curr_array = []
         for relv_item in relv_search:
             relv_index = relv_item[0]
-            curr_value = (curr_strain['vector'])[relv_index]
+            curr_value = curr_vector[relv_index]
             curr_array.append(curr_value)
         cos_sim = cosine_sim(array(search_strain), array(curr_array))
         rating = float(curr_strain['rating'])/5
         score = settings.RATING_WEIGHT * (cos_sim*rating) + \
             settings.DOM_TOPIC_WEIGHT * (1 if curr_strain['dominant_topic'] == int(dom_topic) else 0) + \
             settings.REMAINING_WEIGHT * cos_sim
-        scoring.append((score, curr_strain))
+        scoring.append((score, curr_strain, curr_strain['name']))
 
     sorted_strains = sorted(scoring, key=lambda tup: tup[0], reverse=True)
 
@@ -265,17 +266,32 @@ def custom_results(request):
 
     # get list of strains from SQL database
     strain_names = find_relevant_strains(search_obj)
-    print(strain_names)
 
-    # #finding the relevant dimensions to run cosine sim on
-    # search_strain, relv_search = get_rel_search(search_strain_vector)
-    #
-    # #get dominant topic
-    # dom_topic = get_dom_topic(search_obj)
-    #
-    # output = rank_strains(data, search_strain, relv_search, dom_topic)
-    #
-    # return HttpResponse(json.dumps(output))
+    #finding the relevant dimensions to run cosine sim on
+    search_strain, relv_search = get_rel_search(search_strain_vector)
+
+    #get dominant topic
+    dom_topic = get_dom_topic(search_obj)
+    search_vectors = names_to_vectors(strain_names)
+
+    strain_ranks = rank_strains(search_vectors, search_strain, relv_search, dom_topic)
+
+    return HttpResponse(json.dumps(strain_ranks))
+
+
+def names_to_vectors(strain_names):
+    vectors = {}
+    with open('./data/strain_to_vector.json', encoding="utf8") as f:
+        vectors = json.load(f)
+
+    output = []
+    for name in strain_names:
+        try:
+            vector = vectors[name]
+            output.append(vector)
+        except KeyError:
+            continue
+    return output
 
 
 def search_to_vector(input, keys_vector):
