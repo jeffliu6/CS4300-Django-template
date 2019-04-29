@@ -40,8 +40,76 @@ def cosine_sim(a, b):
 
 @csrf_exempt
 def similar_results(request):
-    results = []
-    return HttpResponse(json.dumps(results))
+    RATING_WEIGHT = 1/4
+    REMAINING_WEIGHT = 1 - RATING_WEIGHT
+
+    current_strain_request = (get_request_data(request))
+    current_strain_name = current_strain_request['strain']
+    # Get Data (Change later?)
+    data = {}
+    with open('./data/combined_cleaned_data.json', encoding="utf8") as f:
+        data = json.loads(f.read())
+
+    #getting the correct strain data
+    current_strain_data = []
+    for strain in data:
+        if current_strain_name in strain["name"] or current_strain_name in strain["name"]:
+            current_strain_data = strain
+            break
+    if current_strain_data == []:
+        return HttpResponse(json.dumps(current_strain_data))
+
+    search_strain, relv_search = get_rel_search(current_strain_data['vector'])
+
+    scoring = []
+    for i in range(len(data)):
+        curr_strain = data[i]
+        curr_array = []
+        for relv_item in relv_search:
+            relv_index = relv_item[0]
+            curr_value = (curr_strain['vector'])[relv_index]
+            curr_array.append(curr_value)
+        cos_sim = cosine_sim(array(search_strain), array(curr_array))
+        rating = float(curr_strain['rating'])/5
+        score = RATING_WEIGHT * (cos_sim*rating) + \
+            REMAINING_WEIGHT * cos_sim
+        scoring.append((score, curr_strain))
+
+    sorted_strains = sorted(scoring, key=lambda tup: tup[0], reverse=True)
+    top_ten = sorted_strains[1:10]
+    data = top_ten
+
+    keys = {}
+    with open('./data/keys_vector.json', encoding="utf8") as f:
+        keys = json.loads(f.read())
+
+    for sim_tup in top_ten:
+        sim_score = sim_tup[0]
+        sim_strain = sim_tup[1]
+
+        matched_values = []
+        matched_vector =[]
+        for index in range(len(sim_strain['vector'])):
+            matched_vector.append((sim_strain['vector'])[index] + (current_strain_data['vector'])[index])
+
+        matched_vector = matched_vector[:-1]
+
+
+
+
+        for index in range(len(matched_vector)):
+            if matched_vector[index] > 1:
+                matched_factor = keys[index]
+                matched_values.append(matched_factor)
+        print(matched_values)
+
+
+
+
+
+
+
+    return HttpResponse(json.dumps(data))
 
 
 def get_request_data(request):
