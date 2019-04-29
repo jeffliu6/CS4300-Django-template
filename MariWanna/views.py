@@ -157,31 +157,29 @@ def parse_search(data, keys_vector):
         if term in categories['flavor']:
             flavor_lst.append(term)
 
-    draft_keyword_lst = data.get("keyword")
+    keyword_lst = data.get("keyword")
     if keyword_lst == None:
         keyword_lst = []
-
-    # state = data.get('state')
-    # city = data.get('city')
-    # strength = data.get('strength')
-
-    #determine valid keys
     valid_key_lst = []
     for keyword in keyword_lst:
         if keyword in keys_vector:
             valid_key_lst.append(keyword.lower().strip())
 
+    # state = data.get('state')
+    # city = data.get('city')
+    # strength = data.get('strength')
+
     #if input is just gibberish return None
     if len(positive_lst) + len(negative_lst) + len(medical_lst) + \
-        len(aromas_lst) + len(flavors_lst) + len(valid_key_lst) == 0:
+        len(aroma_lst) + len(flavor_lst) + len(valid_key_lst) == 0:
         return None
 
     return {
         'positive': positive_lst,
         'negative_effects': negative_lst,
         'medical': medical_lst,
-        'aroma': aromas_lst,
-        'flavor_descriptors': flavors_lst,
+        'aroma': aroma_lst,
+        'flavor_descriptors': flavor_lst,
         'keywords': valid_key_lst
     }
 
@@ -211,6 +209,7 @@ def get_rel_search(search_strain_vector):
             search_strain.append(1)
             relv_search.append((index, search_strain_vector[index]))
     return search_strain, relv_search
+
 
 def rank_strains(data, search_strain, relv_search, dom_topic):
     scoring = []
