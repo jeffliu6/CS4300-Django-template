@@ -33,7 +33,7 @@ MEAN_THC = 19.092282784673504
 def login(request):
     return render_url(request, 'login.html')
 
-@csrf_exempt 
+@csrf_exempt
 def failed_authentication(request):
     return render_url(request, 'failed_authentication.html')
 
@@ -43,7 +43,7 @@ def create_account(request):
 
 @csrf_exempt
 def logout(request):
-    try: 
+    try:
         del request.session['user_id']
         del request.session['email']
     except:
@@ -67,17 +67,17 @@ def render_url(request, url):
     if is_session_set(request):
         context = convert_request_to_context(request)
         return render_to_response(url, context=context)
-    else: 
+    else:
         return render_to_response(url)
 
 def is_session_set(request):
     return request.session.has_key('user_id')
 
 def convert_request_to_context(request):
-    context = {'user_id': request.session['user_id'], 
+    context = {'user_id': request.session['user_id'],
         'email': request.session['email']}
     return context
-    
+
 def cosine_sim(a, b):
     dot = np.dot(a, b)
     norma = np.linalg.norm(a)
@@ -153,9 +153,9 @@ def create_query_for_new_user(email, hashed_password):
 
 @csrf_exempt
 def similar_results(request):
-    print("HI JEFF")
-    RATING_WEIGHT = 1/4
-    REMAINING_WEIGHT = 1 - RATING_WEIGHT
+    keys_vector = {}
+    with open('./data/keys_vector.json', encoding="utf8") as f:
+        keys_vector = json.loads(f.read())
 
     current_strain_request = (get_request_data(request))
     current_strain_name = current_strain_request['strain']
@@ -179,28 +179,39 @@ def similar_results(request):
     for i in range(len(data)):
         curr_strain = data[i]
         curr_array = []
+        score_categories_breakdown_lst = []
         for relv_item in relv_search:
             relv_index = relv_item[0]
             curr_value = (curr_strain['vector'])[relv_index]
             curr_array.append(curr_value)
-        cos_sim = cosine_sim(array(search_strain), array(curr_array))
+            # for the score breakdown, what words are relevant
+            if relv_index < len(keys_vector):
+                score_categories_breakdown_lst.append(keys_vector[relv_index])
+
         rating = float(curr_strain['rating'])/5
-        score = RATING_WEIGHT * (cos_sim*rating) + \
-            REMAINING_WEIGHT * cos_sim
-        scoring.append((score, curr_strain))
+        rating_score = settings.RATING_WEIGHT * rating
+
+        cos_sim = cosine_sim(array(search_strain), array(curr_array))
+        categories_score = (1 - settings.RATING_WEIGHT) * cos_sim
+
+        score = rating_score + categories_score
+
+        score_breakdown = {}
+        score_breakdown['rating'] = rating_score/score
+
+        per_word_score = categories_score/score/len(score_categories_breakdown_lst)
+        for word in score_categories_breakdown_lst:
+            score_breakdown[word] = per_word_score
+        scoring.append((score, curr_strain, score_breakdown))
 
     sorted_strains = sorted(scoring, key=lambda tup: tup[0], reverse=True)
-    top_ten = sorted_strains[1:10]
-    data = top_ten
-
-    keys = {}
-    with open('./data/keys_vector.json', encoding="utf8") as f:
-        keys = json.loads(f.read())
+    top_ten = sorted_strains[1:50] #skip the first so you don't return the searched strain
 
     top_ten_final = []
     for sim_tup in top_ten:
         sim_score = sim_tup[0]
         sim_strain = sim_tup[1]
+        score_breakdown = sim_tup[2]
 
         matched_values = []
         matched_vector =[]
@@ -209,14 +220,13 @@ def similar_results(request):
 
         matched_vector = matched_vector[:-1]
 
-
         inverse_categories= {}
         with open('./data/inverse_categories.json', encoding="utf8") as f:
             inverse_categories = json.loads(f.read())
 
         for index in range(len(matched_vector)):
             if matched_vector[index] > 1:
-                matched_factor = keys[index]
+                matched_factor = keys_vector[index]
                 matched_values.append(matched_factor)
 
         final_matched_lst = {}
@@ -226,7 +236,7 @@ def similar_results(request):
                 final_matched_lst[curr_category] = final_matched_lst[curr_category] + [value]
             else:
                 final_matched_lst[curr_category] = [value]
-        top_ten_final.append((sim_score, sim_strain, final_matched_lst))
+        top_ten_final.append((sim_score, sim_strain, final_matched_lst, score_breakdown))
 
 
     sorted_strains_final = sorted(top_ten_final, key=lambda tup: tup[0], reverse=True)
@@ -318,6 +328,8 @@ def get_dom_topic(strain):
             if keyword in current_topic_lst:
                 dom_topic_weights[int(topic)] += current_topic_lst[keyword]
     # choose a maximum with random tiebreaker
+    if max(dom_topic_weights) == 0:
+        return None
     shuffle(dom_topic_weights)
     return max(range(len(dom_topic_weights)), key=lambda i: dom_topic_weights[i])
 
@@ -331,6 +343,7 @@ def get_rel_search(search_strain_vector):
             search_strain.append(1)
             relv_search.append((index, search_strain_vector[index]))
     return search_strain, relv_search
+
 
 def calculate_strength_diff(search_strength, curr_strain):
     curr_thc = 0
@@ -350,32 +363,45 @@ def calculate_strength_diff(search_strength, curr_strain):
     return compare
 
 
-def rank_strains(search_vectors, search_strain, relv_search, dom_topic, search_strength):
+def rank_strains(search_vectors, search_strain, relv_search, dom_topic, search_strength, keys_vector):
     scoring = []
     for i in range(len(search_vectors)):
         curr_strain = search_vectors[i]
         curr_vector = curr_strain['vector']
+        score_categories_breakdown_lst = []
         curr_array = []
         for relv_item in relv_search:
             relv_index = relv_item[0]
             curr_value = curr_vector[relv_index]
+
+            # for the score breakdown, what words are relevant
+            if relv_index < len(keys_vector):
+                score_categories_breakdown_lst.append(keys_vector[relv_index])
             curr_array.append(curr_value)
-        cos_sim = cosine_sim(array(search_strain), array(curr_array))
         rating = float(curr_strain['rating'])/5
-        score = 0
+        rating_score = settings.RATING_WEIGHT * rating
+
+        keywords_score = settings.DOM_TOPIC_WEIGHT * (1 if (dom_topic is not None and curr_strain['dominant_topic'] == int(dom_topic)) else 0)
+
+        cos_sim = cosine_sim(array(search_strain), array(curr_array))
+        categories_score = settings.REMAINING_WEIGHT * cos_sim
         if search_strength == None:
-            score = settings.RATING_WEIGHT * (rating) + \
-                settings.DOM_TOPIC_WEIGHT * (1 if curr_strain['dominant_topic'] == int(dom_topic) else 0) + \
-                settings.REMAINING_WEIGHT * cos_sim
+            score = rating_score + keywords_score + categories_score
         else:
             strength_score_diff = calculate_strength_diff(search_strength, curr_strain)
-            print(strength_score_diff)
-            score = settings.RATING_WEIGHT * (rating) + \
-                settings.DOM_TOPIC_WEIGHT * (1 if curr_strain['dominant_topic'] == int(dom_topic) else 0) + \
-                settings.STRENGTH_WEIGHT * (strength_score_diff) + \
-                ((settings.REMAINING_WEIGHT - (1/8)) * cos_sim)
+            strength_score = settings.STRENGTH_WEIGHT * strength_score_diff
+            score = rating_score + keywords_score + strength_score + categories_score
 
-        scoring.append((score, curr_strain, curr_strain['name']))
+        score_breakdown = {}
+        score_breakdown['rating'] = rating_score/score
+        score_breakdown['keywords'] = 0 if keywords_score == 0 else keywords_score/score
+        score_breakdown['strength'] = 0 if search_strength == None else strength_score/score
+
+        per_word_score = categories_score/score/len(score_categories_breakdown_lst)
+        for word in score_categories_breakdown_lst:
+            score_breakdown[word] = per_word_score
+
+        scoring.append((score, curr_strain, score_breakdown))
 
     sorted_strains = sorted(scoring, key=lambda tup: tup[0], reverse=True)
     expanded_search_vector = [0] * 147
@@ -393,6 +419,7 @@ def rank_strains(search_vectors, search_strain, relv_search, dom_topic, search_s
     for sim_tup in data:
         sim_score = sim_tup[0]
         sim_strain = sim_tup[1]
+        score_breakdown = sim_tup[2]
 
         matched_values = []
         matched_vector =[]
@@ -418,19 +445,11 @@ def rank_strains(search_vectors, search_strain, relv_search, dom_topic, search_s
                 final_matched_lst[curr_category] = final_matched_lst[curr_category] + [value]
             else:
                 final_matched_lst[curr_category] = [value]
-        top_ten_final.append((sim_score, sim_strain, final_matched_lst))
+        top_ten_final.append((sim_score, sim_strain, final_matched_lst, score_breakdown))
 
 
     sorted_strains_final = sorted(top_ten_final, key=lambda tup: tup[0], reverse=True)
-    for sti in sorted_strains_final:
-        print(sti[2])
-
-
-
-
-
-    #return top 10
-    return sorted_strains[:9]
+    return sorted_strains_final
 
 
 
@@ -468,7 +487,7 @@ def custom_results(request):
     strength = search_obj['strength']
 
 
-    strain_ranks = rank_strains(search_vectors, search_strain, relv_search, dom_topic, strength)
+    strain_ranks = rank_strains(search_vectors, search_strain, relv_search, dom_topic, strength, keys_vector)
 
     return HttpResponse(json.dumps(strain_ranks))
 
