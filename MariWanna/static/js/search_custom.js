@@ -250,6 +250,16 @@ $(document).ready(function(){ $.getJSON( "/static/data/select-options.json" , fu
     requestData.flavors = [];
     requestData.aromas = [];
     
+    function get_popover(weights) {
+        let popover = [];
+        Object.entries(weights).forEach(function(entry){
+            if(entry[1] != 0) {
+                popover.push(entry[0] + ": " + entry[1].toFixed(3));
+            }
+        });
+        return popover.join(", ");
+    }
+
     // Submit request logic
     $( "#customSearch" ).submit(function( event ) {
         event.preventDefault();
@@ -298,10 +308,15 @@ $(document).ready(function(){ $.getJSON( "/static/data/select-options.json" , fu
                     '<div class="d-flex justify-content-between"><h5 class="card-title font-weight-bolder mb-1">' + strain[1]["name"] +'</h5><p class="text-muted text-small">' + strain[0].toFixed(2) + '</p></div>' +
                         '<p class="card-text mb-1 text-muted font-italic">Rating: '+ Number(strain[1]["rating"]).toFixed(2) +'/5.00</p>' +
                         '<p class="card-text">'+ strain[1]["description"].substring(0, 90) +'...</p>' +
-                        '<p class="text-success modal-triggor" data-toggle="modal" data-target="#exampleModalLong">See More</p>' +
-                    '</div>' +
+                        '<div class="d-flex justify-content-between"><p class="text-success modal-triggor" data-toggle="modal" data-target="#exampleModalLong">See More</p>' + 
+                        '<button type="button" class="btn" data-toggle="popover" data-triggor="focus" data-container="body" title="Score Breakdown" data-content=" ' + get_popover(strain[3]) + '"><img class="question-icon float-right" src="/static/images/question-mark-light.png"/></button></div>' +
                 '</div>');
                 
+
+                $("[data-toggle=popover]").popover({
+                    trigger: 'focus'
+                  });
+
                 $("#strain_" + count).on("click", function() {
 
                     $("#modal-img").empty();
@@ -348,6 +363,13 @@ $(document).ready(function(){ $.getJSON( "/static/data/select-options.json" , fu
                 count++;
             });
             $("#loadingDiv").fadeOut();
+
+
+            $(".question-icon").hover(function() {
+                $(this).attr("src", "/static/images/question-mark-dark.png");
+            },function() {
+                $(this).attr("src", "/static/images/question-mark-light.png");
+            });
 
             $("#customSearch").addClass("col-4", 500).removeClass("col-5", function(){
                 $("#results").addClass("d-flex").show(500);

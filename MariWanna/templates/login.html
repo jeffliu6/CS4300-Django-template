@@ -5,20 +5,19 @@
 {% endblock headers %}
 
 {% block content %}
-<div class="container d-flex justify-content-center">
+<div class="container d-flex justify-content-center text-center">
     <div id="login">
         <form class="p-5 mt-5 shadow rounded bg-light">
             <h3 class="pb-3">Login</h3>
-            <div class="d-flex">
-                <div class="form-group d-flex w-75">
+            <div class="d-flex flex-column">
+                <div class="form-group d-flex">
                     <input class="form-control" id="email" placeholder="Email"/>
                 </div>
-                <br/>
-                <div class="form-group d-flex w-75">
+                <div class="form-group d-flex">
                     <input class="form-control" type="password" id="password" placeholder="Password"/>
                 </div>
                 <div>
-                    <div class="d-flex justify-content-center ml-3">
+                    <div class="d-flex justify-content-center">
                         <button id="search-btn" type="submit" class="btn btn-dark">Login</button>
                         <img class="ml-2" id="loadingDiv" height="30px" src="/static/images/icon_48.gif"/>
                         <script>$("#loadingDiv").hide()</script>
@@ -26,6 +25,7 @@
                 </div>
             </div>
 
+                <br/>
             <h5 class="pb-3">Don't have an account?</h5>
             <a href="create-account">Create One!</a>
         </form>
