@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block headers %}
+<script type="text/javascript" src="/static/js/login.js"></script>
+{% endblock headers %}
+
+{% block content %}
+<div class="container d-flex justify-content-center">
+    <div id="login">
+        <form class="p-5 mt-5 shadow rounded bg-light">
+            <h3 class="pb-3">Login Failed</h3>
+            <a href="/login">Click Here to Try Again</a>
+        </form>
+    </div>
+            
+
+</div>
+<script>$("#login").hide();</script>
+<h1 class="p-3 ml-2" id="results-header"></h1>
+<div id="results" class="mt-4 ml-3 mb-3 flex-wrap bg-dark justify-content-center">
+    
+</div>
+<script>
+    $("#results").hide();
+    $("#results-header").hide();
+</script>
+</div>
+
+{% endblock content %}

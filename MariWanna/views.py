@@ -3,6 +3,7 @@ from django.http import HttpResponse, QueryDict
 from django.shortcuts import render
 from django.shortcuts import render_to_response
 from django.template import loader
+from django.shortcuts import redirect
 from django.views.decorators.csrf import csrf_exempt
 import json
 import numpy as np
@@ -30,24 +31,53 @@ MEAN_THC = 19.092282784673504
 
 @csrf_exempt
 def login(request):
-    return render_to_response('login.html')
+    return render_url(request, 'login.html')
+
+@csrf_exempt 
+def failed_authentication(request):
+    return render_url(request, 'failed_authentication.html')
 
 @csrf_exempt
 def create_account(request):
-    return render_to_response('create_account.html')
+    return render_url(request, 'create_account.html')
+
+@csrf_exempt
+def logout(request):
+    try: 
+        del request.session['user_id']
+        del request.session['email']
+    except:
+        pass
+    response = redirect('/login')
+    return response
 
 @csrf_exempt
 def home(request):
-    return render_to_response('home.html')
+    return render_url(request, 'home.html')
 
 @csrf_exempt
 def similar_search(request):
-    return render_to_response('search_similar.html')
+    return render_url(request, 'search_similar.html')
 
 @csrf_exempt
 def custom_search(request):
-    return render_to_response('search_custom.html')
+    return render_url(request, 'search_custom.html')
 
+def render_url(request, url):
+    if is_session_set(request):
+        context = convert_request_to_context(request)
+        return render_to_response(url, context=context)
+    else: 
+        return render_to_response(url)
+
+def is_session_set(request):
+    return request.session.has_key('user_id')
+
+def convert_request_to_context(request):
+    context = {'user_id': request.session['user_id'], 
+        'email': request.session['email']}
+    return context
+    
 def cosine_sim(a, b):
     dot = np.dot(a, b)
     norma = np.linalg.norm(a)
@@ -64,6 +94,8 @@ def perform_signin(request):
     signin_info = convert_to_dictionary(request)
     user_data = find_user_data(signin_info)
     is_user_in_db = is_user_existent(user_data)
+    if is_user_in_db:
+        create_session(user_data, request)
     return HttpResponse(json.dumps(is_user_in_db))
 
 def convert_to_dictionary(request):
@@ -81,6 +113,11 @@ def create_query_to_find_user(email, hashed_password):
     query = "SELECT * FROM users WHERE email = '{email}' \
             AND password='{hashed_password}' LIMIT 1".format(email=email, hashed_password=hashed_password)
     return query
+
+def create_session(user_data, request):
+    user_record = user_data[0]
+    request.session['user_id'] = user_record[0]
+    request.session['email'] = user_record[1]
 
 def is_user_existent(user_data):
     return len(user_data) > 0
