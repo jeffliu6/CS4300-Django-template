@@ -64,6 +64,11 @@
 
         {% endblock content %}
         </div>
+        <script>
+            var height = $(window).height();
+            let nav_height = $("nav").height();
+            $("#mainContent").css("min-height", height-nav_height);
+        </script>
     </body>
     <footer class="bg-dark text-muted mt-3 p-2">
         <div class="d-flex justify-content-center p-2 mt-3">

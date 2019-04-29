@@ -56,8 +56,12 @@ footer {
     color: white;
 }
 
-.card.strain-result {
+ #results .card.strain-result {
     width: 31% !important;
+}
+
+#similar-results .card.strain-result {
+    width: 21% !important;
 }
 
 .strain-result p {

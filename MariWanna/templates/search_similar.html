@@ -6,7 +6,7 @@
 
 {% block content %}
 <div class="container d-flex justify-content-center">
-    <div id="similarSearch">
+    <div id="similarSearch" class="col-5">
         <form class="p-5 mt-5 shadow rounded bg-light">
             <h3 class="pb-3">Similar Strain Search</h3>
             <div class="d-flex">
@@ -22,18 +22,22 @@
                 </div>
             </div>
         </form>
+        
     </div>
 
-</div>
+
+        {% include 'modal.html' %}
+
 <script>$("#similarSearch").hide();</script>
 <h1 class="p-3 ml-2" id="results-header"></h1>
-<div id="results" class="mt-4 ml-3 mb-3 flex-wrap bg-dark justify-content-center">
+<div id="similar-results" class="mt-4 ml-5 mb-3 flex-wrap">
     
 </div>
 <script>
-    $("#results").hide();
+    $("#similar-results").hide();
     $("#results-header").hide();
 </script>
 </div>
 
+</div>
 {% endblock content %}
