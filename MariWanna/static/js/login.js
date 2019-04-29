@@ -14,9 +14,9 @@ $(document).ready(function () {
             })
             .done(function (isUserExistent) {
                 if (isUserExistent == "true") {
-                    console.log("Killer Queen")
+                    window.location.href = "../"
                 } else {
-                    console.log("Benny and the Jets")
+                    window.location.href = "failed-authentication"
                 }
                 //window.location.href = "search-similar";
             });
