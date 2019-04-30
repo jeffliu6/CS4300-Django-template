@@ -14,7 +14,8 @@ $(document).ready(function() {
     });
 
     function get_popover(weights) {
-        return Object.keys(weights).join(", ");
+        // return Object.keys(weights).join(", ");
+        return "";
     }
 
     // Submit request logic

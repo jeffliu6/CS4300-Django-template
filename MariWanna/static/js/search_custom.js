@@ -251,13 +251,18 @@ $(document).ready(function(){ $.getJSON( "/static/data/select-options.json" , fu
     requestData.aromas = [];
     
     function get_popover(weights) {
-        let popover = [];
-        Object.entries(weights).forEach(function(entry){
-            if(entry[1] != 0) {
-                popover.push(entry[0] + ": " + entry[1].toFixed(3));
-            }
-        });
-        return popover.join(", ");
+        // let popover = {};
+        // let str = "";
+        // if(weights.aroma) {
+        //     popover.aromas = [];
+        //     Object.entries(weights.aroma).forEach(function(entry){
+        //         popover.aromas.push(entry[0] + ": " + entry[1].toFixed(2));
+        //     })
+        //     let span = popover.aromas.join(', ');
+        //     str = str.concat(span);
+        // }
+
+        return "Working on it";
     }
 
     // Submit request logic
