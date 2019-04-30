@@ -66,7 +66,6 @@ def custom_search(request):
 def render_url(request, url):
     if is_session_set(request):
         context = convert_request_to_context(request)
-        print(context)
         return render_to_response(url, context=context)
     else:
         return render_to_response(url)
@@ -94,7 +93,7 @@ def get_strains_of_preference(user_id, is_liked):
     strains_of_preference_query = create_strain_preference_query(user_id, is_liked)
     raw_strain_results = db.execute_select_statement(strains_of_preference_query)
     if raw_strain_results != []:
-        strain_results = list(raw_strain_results[0])
+        strain_results = [result[0] for result in raw_strain_results]
         return strain_results
     else:
         return []
@@ -104,7 +103,6 @@ def create_strain_preference_query(user_id, is_liked):
         ON strains.id = user_feedback.strain_id \
         WHERE user_id={user_id} AND \
             user_feedback.user_feedback = {is_liked}".format(user_id=user_id, is_liked=is_liked)
-    print(query)
     return query
 
 def cosine_sim(a, b):
@@ -238,7 +236,7 @@ def similar_results(request):
 
     search_vectors = names_to_vectors(search_strain_names)
 
-    strain_ranks = rank_strains(search_vectors, search_strain, relv_search, None, None, keys_vector)
+    strain_ranks = rank_strains(search_vectors, search_strain, relv_search, None, None, keys_vector, request)
 
     return HttpResponse(json.dumps(strain_ranks[1:]))
 
@@ -361,7 +359,7 @@ def calculate_strength_diff(search_strength, curr_strain):
     return compare
 
 
-def rank_strains(search_vectors, search_strain, relv_search, dom_topic, search_strength, keys_vector):
+def rank_strains(search_vectors, search_strain, relv_search, dom_topic, search_strength, keys_vector, request):
     scoring = []
     for i in range(len(search_vectors)):
         curr_strain = search_vectors[i]
@@ -396,6 +394,24 @@ def rank_strains(search_vectors, search_strain, relv_search, dom_topic, search_s
         score_breakdown = calculate_score_breakdown(score, \
             score_categories_breakdown_lst, rating_score, \
             categories_score, keywords_score, search_strength, strength_score)
+
+        if is_session_set(request):
+            user_id = request.session['user_id']
+            liked_strains = find_liked_strains(user_id)
+            disliked_strains = find_disliked_strains(user_id)
+            if curr_strain['name'] in liked_strains:
+                print("yes")
+                print(score)
+                score = score + 0.1
+                if score > 1.0:
+                    score = 1.0
+                print(score)
+                print(curr_strain['name'])
+            if curr_strain['name'] in disliked_strains: 
+                score = score - 0.1
+                if score < 0:
+                    score = 0
+            
 
         scoring.append((score, curr_strain, score_breakdown))
 
@@ -473,8 +489,7 @@ def custom_results(request):
     dom_topic = get_dom_topic(search_obj)
     search_vectors = names_to_vectors(strain_names)
     strength = search_obj['strength']
-
-    strain_ranks = rank_strains(search_vectors, search_strain, relv_search, dom_topic, strength, keys_vector)
+    strain_ranks = rank_strains(search_vectors, search_strain, relv_search, dom_topic, strength, keys_vector, request)
 
     return HttpResponse(json.dumps(strain_ranks))
 
@@ -602,8 +617,8 @@ def provide_strain_feedback(request):
     return render_url(request, 'search_custom.html')
 
 def get_strain_id_given(strain_name):
-    get_id_query = "SELECT id FROM strain_vectors WHERE strain_name = \
-        '{strain_name}'".format(strain_name = strain_name)
+    get_id_query = 'SELECT id FROM strain_vectors WHERE strain_name = \
+        "{strain_name}"'.format(strain_name = strain_name)
 
     strain_id_results = db.execute_select_statement(get_id_query)
     strain_id = strain_id_results[0][0]
