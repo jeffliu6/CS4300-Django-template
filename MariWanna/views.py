@@ -187,7 +187,6 @@ def search_vector_to_obj(strain_vector):
     with open('./data/inverse_categories.json', encoding="utf8") as f:
         inverse_categories_dict = json.loads(f.read())
 
-
     total_dict = {}
     total_dict['positive'] = []
     total_dict['negative'] = []
@@ -203,12 +202,12 @@ def search_vector_to_obj(strain_vector):
             for cat in category_lst:
                 total_dict[cat] = (total_dict[cat]) + [curr_val]
 
-
     total_dict['flavor_descriptors'] = total_dict['flavor']
     total_dict['negative_effects'] = total_dict['negative']
     del total_dict['flavor']
     del total_dict['negative']
     return total_dict
+
 
 @csrf_exempt
 def similar_results(request):
@@ -226,9 +225,7 @@ def similar_results(request):
     if search_strain_vector == None:
         return HttpResponse(json.dumps([]))
 
-
     search_obj = search_vector_to_obj(search_strain_vector)
-
 
     search_strain, relv_search = get_rel_search(search_strain_vector)
 
@@ -403,9 +400,9 @@ def rank_strains(search_vectors, search_strain, relv_search, dom_topic, search_s
             categories_weight -= settings.STRENGTH_WEIGHT
             total_weight += settings.STRENGTH_WEIGHT
 
-        cos_sim = 0 if len(curr_array) < 1 else cosine_sim(array(search_strain), array(curr_array))
+        cos_sim = None if len(curr_array) < 1 else cosine_sim(array(search_strain), array(curr_array))
 
-        if cos_sim > 0:
+        if cos_sim is not None:
             categories_score = categories_weight * cos_sim
             total_weight = 1
         else:
@@ -453,17 +450,17 @@ def calculate_score_breakdown(name, score, \
     score = score + change
 
     score_breakdown = {}
-    score_breakdown['rating'] = rating_score#/score
-    score_breakdown['keywords'] = 0 if (keywords_score is None or keywords_score == 0) else keywords_score#/score
-    score_breakdown['strength'] = 0 if strength_score == 0 else strength_score#/score
-    score_breakdown['social'] = change#/score
+    score_breakdown['rating'] = rating_score
+    score_breakdown['keywords'] = 0 if (keywords_score is None or keywords_score == 0) else keywords_score
+    score_breakdown['strength'] = 0 if strength_score == 0 else strength_score
+    score_breakdown['social'] = change
 
     inverse_categories= {}
     with open('./data/inverse_categories.json', encoding="utf8") as f:
         inverse_categories = json.loads(f.read())
 
 
-    per_word_score = 0 if len(score_categories_breakdown_lst)==0 else categories_score/len(score_categories_breakdown_lst)#/score
+    per_word_score = 0 if len(score_categories_breakdown_lst)==0 else categories_score/len(score_categories_breakdown_lst)
 
 
     for word in score_categories_breakdown_lst:
@@ -531,8 +528,6 @@ def names_to_vectors(strain_names):
     return output
 
 
-
-
 def search_to_vector(input, keys_vector):
     vector_list_1 = input['positive'] + input['negative_effects'] + \
         input['medical'] + input['aroma'] + input['flavor_descriptors']
@@ -562,7 +557,6 @@ def find_relevant_strains(search_keys):
     raw_strain_names_results = db.execute_select_statement(query_for_strain_names)
     strain_names = [record[0] for record in raw_strain_names_results]
     return strain_names
-
 
 def create_db_query_for_strain_names(search_keys):
     keys_for_db, negative_keys_for_db = get_db_keys(search_keys)
