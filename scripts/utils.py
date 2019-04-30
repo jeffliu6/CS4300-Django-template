@@ -55,13 +55,10 @@ def generate_strainname_to_vector_dict():
 
     vector_dict = {}
     for datum in all_data:
+        if datum['name'] == 'Cherry Skunk':
+            print(datum['vector'])
         vector_dict[datum['name']] = datum
-        # vector_dict[datum['name']] = {
-        #     'vector': datum['vector'],
-        #     'rating': datum['rating'],
-        #     'dominant_topic': datum['dominant_topic'],
-        #     'name': datum['name']
-        # }
+
 
     with open('../data/strain_to_vector.json', 'w') as outfile:
         json.dump(vector_dict, outfile)
@@ -114,6 +111,6 @@ def lda_keywords():
 if __name__ == "__main__":
     # get_all_categories()
     # reverse_categories()
-    # generate_strainname_to_vector_dict()
+    generate_strainname_to_vector_dict()
     # keys_to_category_and_index()
-    lda_keywords()
+    # lda_keywords()

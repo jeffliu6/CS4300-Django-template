@@ -382,6 +382,7 @@ def rank_strains(search_vectors, search_strain, relv_search, dom_topic, search_s
         keywords_score = settings.DOM_TOPIC_WEIGHT * (1 if (dom_topic is not None and curr_strain['dominant_topic'] == int(dom_topic)) else 0)
 
         cos_sim = 0 if len(curr_array) == 1 else cosine_sim(array(search_strain), array(curr_array))
+
         strength_score = None
         if search_strength == None:
             # add strength weight back in if it doesn't exist
@@ -489,9 +490,13 @@ def names_to_vectors(strain_names):
         try:
             vector = vectors[name]
             output.append(vector)
+            if name == 'Cherry Skunk':
+                print(vector['vector'])
         except KeyError:
             continue
     return output
+
+
 
 
 def search_to_vector(input, keys_vector):
