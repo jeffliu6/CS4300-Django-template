@@ -249,6 +249,7 @@ $(document).ready(function(){ $.getJSON( "/static/data/select-options.json" , fu
     requestData.undesiredEffects = [];
     requestData.flavors = [];
     requestData.aromas = [];
+    requestData.keywords = [];
     
     function get_popover(weights) {
         let popover = {};
@@ -335,6 +336,8 @@ $(document).ready(function(){ $.getJSON( "/static/data/select-options.json" , fu
         requestData.undesiredEffects = [];
         requestData.flavors = [];
         requestData.aromas = [];
+        requestData.keywords = [];
+        
         $("#allEffects").children().each(function(){
             let tag = $(this).text();
             
@@ -346,8 +349,10 @@ $(document).ready(function(){ $.getJSON( "/static/data/select-options.json" , fu
                 requestData.undesiredEffects.push(removeX(tag));
             } else if ($(this).hasClass("flavor")) {
                 requestData.flavors.push(removeX(tag));
-            } else {
+            } else if ($(this).hasClass("aroma")) {
                 requestData.aromas.push(removeX(tag));
+            } else {
+                requestData.keywords.push(removeX(tag));
             }
         })
 
