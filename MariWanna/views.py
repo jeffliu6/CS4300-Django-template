@@ -328,7 +328,7 @@ def calculate_strength_diff(search_strength, curr_strain):
     divsor = scaled_search_strength
     if scaled_search_strength == 0:
         divsor = 1
-    compare =  -1 *(abs(scaled_search_strength-scaled_curr_strength)/ divsor)
+    compare =  1 - ((abs(scaled_search_strength-scaled_curr_strength)/ divsor))
 
     return compare
 
