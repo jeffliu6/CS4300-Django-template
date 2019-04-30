@@ -46,6 +46,8 @@ def logout(request):
     try:
         del request.session['user_id']
         del request.session['email']
+        del request.session['liked_strains']
+        del request.session['disliked_strains']
     except:
         pass
     response = redirect('/login')
@@ -66,6 +68,7 @@ def custom_search(request):
 def render_url(request, url):
     if is_session_set(request):
         context = convert_request_to_context(request)
+        print(context)
         return render_to_response(url, context=context)
     else:
         return render_to_response(url)
@@ -74,9 +77,37 @@ def is_session_set(request):
     return request.session.has_key('user_id')
 
 def convert_request_to_context(request):
-    context = {'user_id': request.session['user_id'],
-        'email': request.session['email']}
+    user_id = request.session['user_id']
+    liked_strains = find_liked_strains(user_id)
+    disliked_strains = find_disliked_strains(user_id)
+    context = {'user_id': user_id,
+        'email': request.session['email'],
+        'liked_strains': liked_strains,
+        'disliked_strains': disliked_strains}
     return context
+
+def find_liked_strains(user_id):
+    return get_strains_of_preference(user_id, 1)
+
+def find_disliked_strains(user_id):
+    return get_strains_of_preference(user_id, -1)
+
+def get_strains_of_preference(user_id, is_liked):
+    strains_of_preference_query = create_strain_preference_query(user_id, is_liked)
+    raw_strain_results = db.execute_select_statement(strains_of_preference_query)
+    if raw_strain_results != []:
+        strain_results = list(raw_strain_results[0])
+        return strain_results
+    else:
+        return []
+
+def create_strain_preference_query(user_id, is_liked):
+    query = "SELECT DISTINCT(strain_name) FROM user_feedback INNER JOIN strains \
+        ON strains.id = user_feedback.strain_id \
+        WHERE user_id={user_id} AND \
+            user_feedback.user_feedback = {is_liked}".format(user_id=user_id, is_liked=is_liked)
+    print(query)
+    return query
 
 def cosine_sim(a, b):
     dot = np.dot(a, b)
@@ -555,14 +586,11 @@ def format_key_to_db_key(key):
 
 @csrf_exempt
 def provide_strain_feedback(request):
-    # user_feedback = convert_to_dictionary(request)
+    user_feedback = convert_to_dictionary(request)
     if is_session_set(request):
-        # user_id = request.session['user_id']
-        # strain_name = user_feedback['strain_name']
-        # user_feedback_score = user_feedback['score']
-        user_id = 3
-        strain_name = 'Acid Dough'
-        user_feedback_score = 1
+        user_id = request.session['user_id']
+        strain_name = user_feedback['strain']
+        user_feedback_score = user_feedback['input']
 
         strain_id = get_strain_id_given(strain_name)
         insert_user_feedback_query = create_user_feedback_query(user_id, strain_id, user_feedback_score)
