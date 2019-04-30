@@ -211,36 +211,6 @@ def similar_results(request):
 
     strain_ranks = rank_strains(search_vectors, search_strain, relv_search, None, None, keys_vector)
 
-    # scoring = []
-    # for i in range(len(data)):
-    #     curr_strain = data[i]
-    #     curr_array = []
-    #     score_categories_breakdown_lst = []
-    #     for relv_item in relv_search:
-    #         relv_index = relv_item[0]
-    #         curr_value = (curr_strain['vector'])[relv_index]
-    #         curr_array.append(curr_value)
-    #         # for the score breakdown, what words are relevant
-    #         if relv_index < len(keys_vector):
-    #             score_categories_breakdown_lst.append(keys_vector[relv_index])
-    #
-    #     rating = float(curr_strain['rating'])/5
-    #     rating_score = settings.RATING_WEIGHT * rating
-    #
-    #     cos_sim = cosine_sim(array(search_strain), array(curr_array))
-    #     categories_score = (1 - settings.RATING_WEIGHT) * cos_sim
-    #
-    #     score = rating_score + categories_score
-    #
-    #     strength_score = None
-    #     keywords_score, search_strength = None, None
-    #     score_breakdown = calculate_score_breakdown(score, \
-    #         score_categories_breakdown_lst, rating_score, \
-    #         categories_score, keywords_score, search_strength, strength_score)
-    #
-    #     scoring.append((score, curr_strain, score_breakdown))
-    #
-    # sorted_strains_final = sorted(scoring, key=lambda tup: tup[0], reverse=True)[1:50] #skip the first so you don't return the searched strain
     return HttpResponse(json.dumps(strain_ranks[1:]))
 
 
@@ -506,6 +476,7 @@ def search_to_vector(input, keys_vector):
     return array(cond_vector)
 
 def get_strain_obj(name):
+    name = name.replace('\'','\'\'')
     query_strain_name = "SELECT *\
         FROM strain_vectors \
         WHERE strain_name = '{strain}'".format(strain = name)
