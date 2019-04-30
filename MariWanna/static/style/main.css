@@ -128,3 +128,12 @@ footer {
 .popover-body {
     font-family: 'Lato';
 }
+
+#like-btn, #dislike-btn {
+    height: 30px;
+    width: 30px;
+}
+
+#like-btn:hover, #dislike-btn:hover {
+    cursor: pointer;
+}

@@ -326,7 +326,7 @@ $(document).ready(function(){ $.getJSON( "/static/data/select-options.json" , fu
 
         return str;
     }
-    
+
     // Submit request logic
     $( "#customSearch" ).submit(function( event ) {
         event.preventDefault();
@@ -427,7 +427,42 @@ $(document).ready(function(){ $.getJSON( "/static/data/select-options.json" , fu
                         $("#modal-aromas").text(strain[1]["aroma"].join(", "));
                     } else {
                         $("#modal-aromas-label").remove();
-                    }                
+                    }       
+                    
+                    $("#dislike-btn").on("click", function(){
+                        let requestData = {};
+                        requestData.user = $("#dislike-btn").attr("user");
+                        requestData.strain = strain[1]["name"];
+
+                        if ($(this).attr("src") =="/static/images/dislike-thumb-light.png") {
+                            requestData.input = -1;
+                            $(this).attr("src", "/static/images/dislike-thumb-dark.png");
+                            $("#like-btn").attr("src", "/static/images/thumbs-up-light.png"); 
+                        } else {
+                            requestData.input = 0;
+                            $(this).attr("src", "/static/images/dislike-thumb-light.png");
+                        }
+
+                        console.log(requestData);
+                        $.post('provide-strain-feedback', JSON.stringify(requestData));
+                    });
+
+                    $("#like-btn").on("click", function(){
+                        let requestData = {};
+                        requestData.user = $("#dislike-btn").val();
+                        requestData.strain = strain[1]["name"];
+
+                        if ($(this).attr("src") =="/static/images/thumbs-up-light.png") {
+                            requestData.input = 1;
+                            $(this).attr("src", "/static/images/thumbs-up-dark.png");
+                            $("#dislike-btn").attr("src", "/static/images/dislike-thumb-light.png");
+                        } else {
+                            requestData.input = 1;
+                            $(this).attr("src", "/static/images/thumbs-up-light.png");
+                        }
+
+                        $.post('provide-strain-feedback', JSON.stringify(requestData));
+                    });
 
                     
                 });

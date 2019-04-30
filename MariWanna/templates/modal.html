@@ -3,7 +3,11 @@
         <div class="modal-dialog modal-lg" role="document">
           <div class="modal-content">
             <div class="modal-header">
-              <h5 class="modal-title" id="modal-name">Modal title</h5>
+              <h5 class="modal-title mr-3" id="modal-name">Modal title</h5>
+              {% if user_id %}
+                <img id="dislike-btn" user="{{ user_id }}" src="/static/images/dislike-thumb-light.png"/>
+                <img class="ml-2" id="like-btn" src="/static/images/thumbs-up-light.png"/>
+              {% endif %}
               <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                 <span aria-hidden="true">&times;</span>
               </button>
@@ -23,7 +27,7 @@
                     <b id="modal-flavors-label">Available Flavors:</b>
                     <p id="modal-flavors"></p>
                     <b id="modal-aromas-label">Aromas:</b>
-                    <p id="modal-aromas"></p> 
+                    <p id="modal-aromas"></p>
                 </div>
         
             </div>
