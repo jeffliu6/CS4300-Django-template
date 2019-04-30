@@ -498,7 +498,9 @@ def get_strain_names():
 
     names_list = []
     for data in all_data:
-        names_list.append(data['name'])
+        curr_name = data['name']
+        if curr_name not in names_list:
+            names_list.append(data['name'])
 
     with open('../data/strain_names.json', 'w') as outfile:
         json.dump(names_list, outfile)
@@ -522,5 +524,5 @@ def combine_data():
 if __name__ == "__main__":
     #combine_data()
 
-    run_all()
-    # get_strain_names()
+    # run_all()
+    get_strain_names()
