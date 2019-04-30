@@ -478,25 +478,50 @@ def find_relevant_strains(search_keys):
 
 
 def create_db_query_for_strain_names(search_keys):
-    keys_for_db = get_db_keys(search_keys)
-    query_for_strain_names = "SELECT strain_name, {sum_all_db_keys} as strain_score \
-        FROM strain_vectors \
-        WHERE {sum_all_db_keys} > 0 \
-        ORDER BY strain_score DESC \
-        LIMIT 50".format(sum_all_db_keys = " + ".join(keys_for_db))
+    keys_for_db, negative_keys_for_db = get_db_keys(search_keys)
+
+    # if we have keys and no negative keys, all 3 cases
+    if len(keys_for_db) > 0:
+        if len(negative_keys_for_db) > 0:
+            query_for_strain_names = "SELECT strain_name, 6 - {negative_sum_all_db_keys} + {sum_all_db_keys} as strain_score \
+                FROM strain_vectors \
+                WHERE {sum_all_db_keys} > 0 \
+                OR {negative_sum_all_db_keys} = 0 \
+                ORDER BY strain_score DESC \
+                LIMIT 50".format(sum_all_db_keys = " + ".join(keys_for_db), negative_sum_all_db_keys = " - ".join(negative_keys_for_db))
+        else:
+            query_for_strain_names = "SELECT strain_name, {sum_all_db_keys} as strain_score \
+                FROM strain_vectors \
+                WHERE {sum_all_db_keys} > 0 \
+                ORDER BY strain_score DESC \
+                LIMIT 50".format(sum_all_db_keys = " + ".join(keys_for_db))
+    else:
+        query_for_strain_names = "SELECT strain_name, 6 - {negative_sum_all_db_keys} as strain_score \
+            FROM strain_vectors \
+            WHERE {negative_sum_all_db_keys} = 0 \
+            ORDER BY strain_score DESC \
+            LIMIT 50".format(negative_sum_all_db_keys = " + ".join(negative_keys_for_db))
 
     return query_for_strain_names
 
 def get_db_keys(search_keys):
     all_keys = concatenate_all_keys_from(search_keys)
+    negative_keys = search_keys['negative_effects']
+
     keys_for_db = []
     for key in all_keys:
         formatted_key = format_key_to_db_key(key)
         keys_for_db.append(formatted_key)
-    return keys_for_db
+
+    negative_keys_for_db = []
+    for key in negative_keys:
+        formatted_key = format_key_to_db_key(key)
+        negative_keys_for_db.append(formatted_key)
+
+    return keys_for_db, negative_keys_for_db
 
 def concatenate_all_keys_from(search_keys):
-    key_categories = [positive_effects_key, negative_effects_key, medical_effects_key, aromas_key, flavors_key]
+    key_categories = [positive_effects_key, medical_effects_key, aromas_key, flavors_key]
     keys_concatenated = []
     for key_category in key_categories:
         keys_concatenated += search_keys[key_category]
