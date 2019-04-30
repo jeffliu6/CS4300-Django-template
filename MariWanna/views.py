@@ -196,10 +196,11 @@ def similar_results(request):
 
         score = rating_score + categories_score
 
+        strength_score = None
         keywords_score, search_strength = None, None
         score_breakdown = calculate_score_breakdown(score, \
             score_categories_breakdown_lst, rating_score, \
-            categories_score, keywords_score, search_strength)
+            categories_score, keywords_score, search_strength, strength_score)
 
         scoring.append((score, curr_strain, score_breakdown))
 
@@ -347,6 +348,7 @@ def rank_strains(search_vectors, search_strain, relv_search, dom_topic, search_s
         keywords_score = settings.DOM_TOPIC_WEIGHT * (1 if (dom_topic is not None and curr_strain['dominant_topic'] == int(dom_topic)) else 0)
 
         cos_sim = cosine_sim(array(search_strain), array(curr_array))
+        strength_score = None
         if search_strength == None:
             # add strength weight back in if it doesn't exist
             categories_score = (settings.REMAINING_WEIGHT + settings.STRENGTH_WEIGHT) * cos_sim
@@ -359,7 +361,7 @@ def rank_strains(search_vectors, search_strain, relv_search, dom_topic, search_s
 
         score_breakdown = calculate_score_breakdown(score, \
             score_categories_breakdown_lst, rating_score, \
-            categories_score, keywords_score, search_strength)
+            categories_score, keywords_score, search_strength, strength_score)
 
 
         scoring.append((score, curr_strain, score_breakdown))
@@ -369,7 +371,7 @@ def rank_strains(search_vectors, search_strain, relv_search, dom_topic, search_s
 
 def calculate_score_breakdown(score, \
     score_categories_breakdown_lst, rating_score, \
-    categories_score, keywords_score, search_strength):
+    categories_score, keywords_score, search_strength, strength_score):
     '''
         return score object
         {
