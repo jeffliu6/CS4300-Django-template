@@ -119,3 +119,12 @@ footer {
     src: url('/static/images/.question-icon-dark.png');
     cursor: pointer;
 }
+
+.popover-header {
+    background-color: #4CAE50;
+    color: white;
+}
+
+.popover-body {
+    font-family: 'Lato';
+}
