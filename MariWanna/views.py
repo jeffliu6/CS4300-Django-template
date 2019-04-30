@@ -552,3 +552,34 @@ def format_key_to_db_key(key):
     key = key.replace("'", "")
     key = key.replace("/", "_")
     return "is_" + key.replace(" ", "_")
+
+@csrf_exempt
+def provide_strain_feedback(request):
+    # user_feedback = convert_to_dictionary(request)
+    if is_session_set(request):
+        # user_id = request.session['user_id']
+        # strain_name = user_feedback['strain_name']
+        # user_feedback_score = user_feedback['score']
+        user_id = 3
+        strain_name = 'Acid Dough'
+        user_feedback_score = 1
+
+        strain_id = get_strain_id_given(strain_name)
+        insert_user_feedback_query = create_user_feedback_query(user_id, strain_id, user_feedback_score)
+        db.execute_insert_statement(insert_user_feedback_query)
+
+    return render_url(request, 'search_custom.html')
+
+def get_strain_id_given(strain_name):
+    get_id_query = "SELECT id FROM strain_vectors WHERE strain_name = \
+        '{strain_name}'".format(strain_name = strain_name)
+    
+    strain_id_results = db.execute_select_statement(get_id_query)
+    strain_id = strain_id_results[0][0]
+    return strain_id
+
+def create_user_feedback_query(user_id, strain_id, user_feedback_score):
+    insert_user_feedback_query = "INSERT INTO user_feedback (user_id, strain_id, user_feedback) VALUES ({user_id}, {strain_id}, {user_feedback_score})".format(user_id=user_id, strain_id=strain_id, user_feedback_score=user_feedback_score)
+    return insert_user_feedback_query
+
+    

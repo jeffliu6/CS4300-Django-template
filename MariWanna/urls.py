@@ -16,5 +16,6 @@ urlpatterns = [
     url('search-similar', views.similar_search),
     url('search-custom', views.custom_search),
     url('results-similar', views.similar_results),
-    url('results-custom', views.custom_results)
+    url('results-custom', views.custom_results),
+    url('provide-strain-feedback', views.provide_strain_feedback)
 ]
