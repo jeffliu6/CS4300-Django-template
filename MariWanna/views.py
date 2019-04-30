@@ -196,10 +196,11 @@ def similar_results(request):
 
         score = rating_score + categories_score
 
+        strength_score = None
         keywords_score, search_strength = None, None
         score_breakdown = calculate_score_breakdown(score, \
             score_categories_breakdown_lst, rating_score, \
-            categories_score, keywords_score, search_strength)
+            categories_score, keywords_score, search_strength, strength_score)
 
         scoring.append((score, curr_strain, score_breakdown))
 
