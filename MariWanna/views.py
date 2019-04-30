@@ -361,6 +361,16 @@ def calculate_strength_diff(search_strength, curr_strain):
 
 def rank_strains(search_vectors, search_strain, relv_search, dom_topic, search_strength, keys_vector, request):
     scoring = []
+
+    
+    if is_session_set(request):
+        user_id = request.session['user_id']
+        liked_strains = find_liked_strains(user_id)
+        disliked_strains = find_disliked_strains(user_id)
+    else:
+        liked_strains = []
+        disliked_strains = []
+
     for i in range(len(search_vectors)):
         curr_strain = search_vectors[i]
         curr_vector = curr_strain['vector']
@@ -395,22 +405,15 @@ def rank_strains(search_vectors, search_strain, relv_search, dom_topic, search_s
             score_categories_breakdown_lst, rating_score, \
             categories_score, keywords_score, search_strength, strength_score)
 
-        if is_session_set(request):
-            user_id = request.session['user_id']
-            liked_strains = find_liked_strains(user_id)
-            disliked_strains = find_disliked_strains(user_id)
-            if curr_strain['name'] in liked_strains:
-                print("yes")
-                print(score)
-                score = score + 0.1
-                if score > 1.0:
-                    score = 1.0
-                print(score)
-                print(curr_strain['name'])
-            if curr_strain['name'] in disliked_strains: 
-                score = score - 0.1
-                if score < 0:
-                    score = 0
+        
+        if curr_strain['name'] in liked_strains:
+            score = score + 0.1
+            if score > 1.0:
+                score = 1.0
+        if curr_strain['name'] in disliked_strains: 
+            score = score - 0.1
+            if score < 0:
+                score = 0
             
 
         scoring.append((score, curr_strain, score_breakdown))
@@ -611,8 +614,12 @@ def provide_strain_feedback(request):
         user_feedback_score = user_feedback['input']
 
         strain_id = get_strain_id_given(strain_name)
+        print("Hello: ", strain_id)
         insert_user_feedback_query = create_user_feedback_query(user_id, strain_id, user_feedback_score)
         db.execute_insert_statement(insert_user_feedback_query)
+
+        delete_older_feedback_query = create_delete_older_feedback_query(user_id, strain_id, user_feedback_score)
+        db.execute_insert_statement(delete_older_feedback_query)
 
     return render_url(request, 'search_custom.html')
 
@@ -627,3 +634,10 @@ def get_strain_id_given(strain_name):
 def create_user_feedback_query(user_id, strain_id, user_feedback_score):
     insert_user_feedback_query = "INSERT INTO user_feedback (user_id, strain_id, user_feedback) VALUES ({user_id}, {strain_id}, {user_feedback_score})".format(user_id=user_id, strain_id=strain_id, user_feedback_score=user_feedback_score)
     return insert_user_feedback_query
+
+def create_delete_older_feedback_query(user_id, strain_id, user_feedback_score):
+    user_feedback_score = user_feedback_score * -1 
+    delete_older_feedback_query = "DELETE FROM user_feedback WHERE \
+        user_id={user_id} AND strain_id={strain_id} \
+            AND user_feedback={user_feedback_score}".format(user_id=user_id, strain_id=strain_id, user_feedback_score=user_feedback_score)
+    return delete_older_feedback_query
