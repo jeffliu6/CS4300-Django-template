@@ -613,13 +613,13 @@ def format_key_to_db_key(key):
 @csrf_exempt
 def provide_strain_feedback(request):
     user_feedback = convert_to_dictionary(request)
+    print(request.POST.keys())
     if is_session_set(request):
         user_id = request.session['user_id']
         strain_name = user_feedback['strain']
         user_feedback_score = user_feedback['input']
 
         strain_id = get_strain_id_given(strain_name)
-        print("Hello: ", strain_id)
         insert_user_feedback_query = create_user_feedback_query(user_id, strain_id, user_feedback_score)
         db.execute_insert_statement(insert_user_feedback_query)
 
