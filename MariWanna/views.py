@@ -326,7 +326,7 @@ def get_dom_topic(strain):
     # choose a maximum with random tiebreaker
     if max(dom_topic_weights) == 0:
         return None
-    # shuffle(dom_topic_weights)
+
     return max(range(len(dom_topic_weights)), key=lambda i: dom_topic_weights[i])
 
 
@@ -361,8 +361,6 @@ def calculate_strength_diff(search_strength, curr_strain):
 
 def rank_strains(search_vectors, search_strain, relv_search, dom_topic, search_strength, keys_vector, request):
     scoring = []
-
-    
     if is_session_set(request):
         user_id = request.session['user_id']
         liked_strains = find_liked_strains(user_id)
@@ -384,47 +382,56 @@ def rank_strains(search_vectors, search_strain, relv_search, dom_topic, search_s
             if relv_index < len(keys_vector):
                 score_categories_breakdown_lst.append(keys_vector[relv_index])
             curr_array.append(curr_value)
+
+        #the four pieces of the score
+        categories_weight = 1 - settings.RATING_WEIGHT
+        total_weight = settings.RATING_WEIGHT
+
+        #rating score always exists
         rating = float(curr_strain['rating'])/5
         rating_score = settings.RATING_WEIGHT * rating
 
         keywords_score = settings.DOM_TOPIC_WEIGHT * (1 if (dom_topic is not None and curr_strain['dominant_topic'] == int(dom_topic)) else 0)
+        if keywords_score > 0:
+            categories_weight -= settings.DOM_TOPIC_WEIGHT
+            total_weight += settings.DOM_TOPIC_WEIGHT
 
-        cos_sim = 0 if len(curr_array) == 1 else cosine_sim(array(search_strain), array(curr_array))
-
-        strength_score = None
-        if search_strength == None:
-            # add strength weight back in if it doesn't exist
-            categories_score = (settings.REMAINING_WEIGHT + settings.STRENGTH_WEIGHT) * cos_sim
-            score = rating_score + keywords_score + categories_score
-        else:
-            categories_score = settings.REMAINING_WEIGHT * cos_sim
+        strength_score = 0
+        if search_strength is not None:
             strength_score_diff = calculate_strength_diff(search_strength, curr_strain)
             strength_score = settings.STRENGTH_WEIGHT * strength_score_diff
-            score = rating_score + keywords_score + strength_score + categories_score
+            categories_weight -= settings.STRENGTH_WEIGHT
+            total_weight += settings.STRENGTH_WEIGHT
 
-        score_breakdown = calculate_score_breakdown(score, \
-            score_categories_breakdown_lst, rating_score, \
-            categories_score, keywords_score, search_strength, strength_score)
+        cos_sim = 0 if len(curr_array) < 1 else cosine_sim(array(search_strain), array(curr_array))
 
-        
+        if cos_sim > 0:
+            categories_score = categories_weight * cos_sim
+            total_weight = 1
+        else:
+            categories_score = 0
+
+        score = 100*(rating_score + keywords_score + strength_score + categories_score) / total_weight
+
+        liked = False
+        disliked = False
         if curr_strain['name'] in liked_strains:
-            score = score + 0.1
-            if score > 1.0:
-                score = 1.0
-        if curr_strain['name'] in disliked_strains: 
-            score = score - 0.1
-            if score < 0:
-                score = 0
-            
+            liked = True
+        if curr_strain['name'] in disliked_strains:
+            disliked = True
+
+        score_breakdown = calculate_score_breakdown(curr_strain['name'], score, \
+            score_categories_breakdown_lst, 100*rating_score, \
+            100*categories_score, 100*keywords_score, 100*strength_score, liked, disliked)
 
         scoring.append((score, curr_strain, score_breakdown))
 
     return sorted(scoring, key=lambda tup: tup[0], reverse=True)
 
 
-def calculate_score_breakdown(score, \
+def calculate_score_breakdown(name, score, \
     score_categories_breakdown_lst, rating_score, \
-    categories_score, keywords_score, search_strength, strength_score):
+    categories_score, keywords_score, strength_score, liked, disliked):
     '''
         return score object
         {
@@ -438,25 +445,36 @@ def calculate_score_breakdown(score, \
 
         }
     '''
+    change = 0
+    if liked:
+        change = (1-score)**settings.LIKE_WEIGHT
+    elif disliked:
+        change = -1  * score**settings.LIKE_WEIGHT
+    score = score + change
+
     score_breakdown = {}
-    score_breakdown['rating'] = rating_score/score
-    score_breakdown['keywords'] = 0 if (keywords_score is None or keywords_score == 0) else keywords_score/score
-    score_breakdown['strength'] = 0 if search_strength is None else strength_score/score
+    score_breakdown['rating'] = rating_score#/score
+    score_breakdown['keywords'] = 0 if (keywords_score is None or keywords_score == 0) else keywords_score#/score
+    score_breakdown['strength'] = 0 if strength_score == 0 else strength_score#/score
+    score_breakdown['social'] = change#/score
 
     inverse_categories= {}
     with open('./data/inverse_categories.json', encoding="utf8") as f:
         inverse_categories = json.loads(f.read())
 
-    per_word_score = 0 if len(score_categories_breakdown_lst)==0 else categories_score/score/len(score_categories_breakdown_lst)
+
+    per_word_score = 0 if len(score_categories_breakdown_lst)==0 else categories_score/len(score_categories_breakdown_lst)#/score
+
+
     for word in score_categories_breakdown_lst:
         categories = inverse_categories[word]
         for category in categories:
             if category not in score_breakdown:
                 category_obj = {}
-                category_obj[word] = per_word_score/len(categories)/score
+                category_obj[word] = per_word_score/len(categories)
                 score_breakdown[category] = category_obj
             else:
-                score_breakdown[category][word] = per_word_score/len(categories)/score
+                score_breakdown[category][word] = per_word_score/len(categories)
 
     return score_breakdown
 
@@ -508,8 +526,6 @@ def names_to_vectors(strain_names):
         try:
             vector = vectors[name]
             output.append(vector)
-            if name == 'Cherry Skunk':
-                print(vector['vector'])
         except KeyError:
             continue
     return output
@@ -522,7 +538,6 @@ def search_to_vector(input, keys_vector):
         input['medical'] + input['aroma'] + input['flavor_descriptors']
     vector_list = [x.lower() for x in vector_list_1]
     cond_vector = [1 if key in vector_list else 0 for key in keys_vector]
-    cond_vector.append(1) #always include rating
     return array(cond_vector)
 
 def get_strain_obj(name):
