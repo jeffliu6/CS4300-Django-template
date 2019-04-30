@@ -370,14 +370,14 @@ $(document).ready(function(){ $.getJSON( "/static/data/select-options.json" , fu
         if($("#like-btn").attr("liked")) {
             let liked = $("#like-btn").attr("liked");
             liked = liked.split(',');
-            
+
             liked.forEach(function(e){
                 like_status[e] = 1;
             });
         }
 
         function like_strain(name) {
-            if (like_status[name] == 1) {
+            if (name in like_status && like_status[name] == 1) {
                 like_status[name] = 0;
             } else {
                 like_status[name] = 1;  
@@ -385,7 +385,7 @@ $(document).ready(function(){ $.getJSON( "/static/data/select-options.json" , fu
         }
 
         function dislike_strain(name) {
-            if (like_status[name] == -1) {
+            if (name in like_status && like_status[name] == -1) {
                 like_status[name] = 0;
             } else {
                 like_status[name] = -1;  
@@ -510,7 +510,7 @@ $(document).ready(function(){ $.getJSON( "/static/data/select-options.json" , fu
                         dislike_strain(requestData.strain);
                         update_dislike_btn(strain);
                         requestData.input = like_status[requestData.strain];
-
+                        console.log("clicked");
                         $.post('provide-strain-feedback', JSON.stringify(requestData));
                     });
 
@@ -520,6 +520,7 @@ $(document).ready(function(){ $.getJSON( "/static/data/select-options.json" , fu
                         requestData.strain = $(".modal-title").text();
                         like_strain(requestData.strain);
                         update_like_btn(strain);
+                        requestData.input = like_status[requestData.strain];
 
                         $.post('provide-strain-feedback', JSON.stringify(requestData));
                     });
