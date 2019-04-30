@@ -507,28 +507,10 @@ def get_strain_names():
         json.dump(names_list, outfile)
 
 
-
-
-
-
 def add_vectors():
     input_data = {}
     with open('../data/combined_cleaned_data.json') as f:
         input_data = json.load(f)
-
-    # combine description and reviews
-    # documents = []
-    # for input in input_data:
-    #     text = input['description']
-    #     reviews = input['reviews']
-    #     for review in reviews:
-    #         text += review
-    #     documents.append(text)
-
-    #turn text into matrix
-    # stop_words = ENGLISH_STOP_WORDS.union(additional_stopwords)
-    # vectorizer = TfidfVectorizer(stop_words = stop_words, max_df = .90, min_df = 200)
-    # my_matrix = vectorizer.fit_transform(documents)
 
     keys_vector = []
     with open('../data/keys_vector.json') as f:
@@ -539,23 +521,20 @@ def add_vectors():
         cond_vector = strain_to_vector(input, keys_vector)
         cond_vectors.append(cond_vector)
     final_matrix = np.array([np.array(xi) for xi in cond_vectors])
-    # average_matrix = list(np.mean(final_matrix, axis=0))
 
     # add vector to every strain
     i = 0
     for data in input_data:
-        data['vector'] = list(final_matrix[i,:])
-        if data['name'] == 'Cherry Skunk':
-            print(data['vector'])
+        # data['vector'] = list(final_matrix[i,:])
+        numpy_array_to_int_list = list(final_matrix[i,:])
+        new_array = []
+        for item in numpy_array_to_int_list:
+            new_array.append(int(item))
+        data['vector'] = new_array
         i += 1
-
-
 
     with open('../data/combined_cleaned_data.json', 'w') as f:
         json.dump(input_data, f)
-
-    # with open('../data/averages.json', 'w') as f:
-    #     json.dump(average_matrix, f)
 
 
 def strain_to_vector(input, keys_vector):
@@ -567,13 +546,13 @@ def strain_to_vector(input, keys_vector):
             cond_vector.append(1)
         else:
             cond_vector.append(0)
-    cond_vector.append(float(input['rating'])/5)
     return cond_vector
 
 def run_all():
     combine_all_data()
     add_dominant_topic()
     add_vectors()
+    generate_strainname_to_vector_dict()
 
 
 def combine_data():
@@ -581,6 +560,19 @@ def combine_data():
     remove_dupes_leafly()
     combine_leafly_allbud_dicts()
 
+
+def generate_strainname_to_vector_dict():
+    all_data = {}
+    with open('../data/combined_cleaned_data.json', encoding="utf8") as f:
+        all_data = json.load(f)
+
+    vector_dict = {}
+    for datum in all_data:
+        vector_dict[datum['name']] = datum
+
+
+    with open('../data/strain_to_vector.json', 'w') as outfile:
+        json.dump(vector_dict, outfile)
 
 if __name__ == "__main__":
     #combine_data()
