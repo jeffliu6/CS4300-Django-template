@@ -421,9 +421,9 @@ def calculate_score_breakdown(score, \
         }
     '''
     score_breakdown = {}
-    score_breakdown['rating'] = rating_score#/score
-    score_breakdown['keywords'] = 0 if (keywords_score is None or keywords_score == 0) else keywords_score#/score
-    score_breakdown['strength'] = 0 if search_strength is None else strength_score#/score
+    score_breakdown['rating'] = rating_score/score
+    score_breakdown['keywords'] = 0 if (keywords_score is None or keywords_score == 0) else keywords_score/score
+    score_breakdown['strength'] = 0 if search_strength is None else strength_score/score
 
     inverse_categories= {}
     with open('./data/inverse_categories.json', encoding="utf8") as f:
@@ -435,10 +435,10 @@ def calculate_score_breakdown(score, \
         for category in categories:
             if category not in score_breakdown:
                 category_obj = {}
-                category_obj[word] = per_word_score/len(categories)
+                category_obj[word] = per_word_score/len(categories)/score
                 score_breakdown[category] = category_obj
             else:
-                score_breakdown[category][word] = per_word_score/len(categories)
+                score_breakdown[category][word] = per_word_score/len(categories)/score
 
     return score_breakdown
 
