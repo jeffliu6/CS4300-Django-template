@@ -254,6 +254,11 @@ $(document).ready(function(){ $.getJSON( "/static/data/select-options.json" , fu
     function get_popover(weights) {
         let popover = {};
         let str = "";
+
+        // if(weights.feedback) {
+        //     let span = "<p class=\"feedback-weight\"><b class=\"mr-3\">Feedback</b> " + weights.feedback.toFixed(2) + "</p>";
+        //     str = str.concat(span);
+        // }
         
         if(weights.rating != 0) {
             let span = "<p class=\"rating-weight\"><b class=\"mr-3\">Rating</b> " + weights.rating.toFixed(2) + "</p>";
@@ -356,6 +361,75 @@ $(document).ready(function(){ $.getJSON( "/static/data/select-options.json" , fu
             }
         })
 
+        let like_status = {};
+
+        if($("#dislike-btn").attr("disliked")) {
+            let disliked = $("#dislike-btn").attr("disliked");
+            disliked = disliked.split(',');
+            
+            disliked.forEach(function(e){
+                like_status[e] = -1;
+            });
+        }
+
+        if($("#like-btn").attr("liked")) {
+            let liked = $("#like-btn").attr("liked");
+            liked = liked.split(',');
+
+            liked.forEach(function(e){
+                like_status[e] = 1;
+            });
+        }
+
+        function like_strain(name) {
+            if (name in like_status && like_status[name] == 1) {
+                like_status[name] = 0;
+            } else {
+                like_status[name] = 1;  
+            }   
+        }
+
+        function dislike_strain(name) {
+            if (name in like_status && like_status[name] == -1) {
+                like_status[name] = 0;
+            } else {
+                like_status[name] = -1;  
+            }       
+        }
+
+        function update_dislike_btn(strain) {
+            if($("#dislike-btn").attr("disliked")) {
+                let strain_name = strain[1]["name"];
+                if (strain_name in like_status) {
+                    if (like_status[strain_name] == -1) {
+                        $("#dislike-btn").attr("src", "/static/images/dislike-thumb-dark.png");
+                        $("#like-btn").attr("src", "/static/images/thumbs-up-light.png");
+                    } else {
+                        $("#dislike-btn").attr("src", "/static/images/dislike-thumb-light.png");
+                    }
+                } else {
+                    $("#dislike-btn").attr("src", "/static/images/dislike-thumb-light.png");
+                }
+                
+            }
+        }
+
+        function update_like_btn(strain) {
+            if($("#like-btn").attr("liked")) {
+                let strain_name = strain[1]["name"];
+                if (strain_name in like_status) {
+                    if (like_status[strain_name] == 1) {
+                        $("#dislike-btn").attr("src", "/static/images/dislike-thumb-light.png");
+                        $("#like-btn").attr("src", "/static/images/thumbs-up-dark.png");
+                    } else {
+                        $("#like-btn").attr("src", "/static/images/thumbs-up-light.png");
+                    }
+                } else {
+                    $("#like-btn").attr("src", "/static/images/thumbs-up-light.png");
+                }
+            }
+        }
+
         console.log(requestData);
         $.post( "results-custom", JSON.stringify(requestData))
         .always(function() {
@@ -431,60 +505,28 @@ $(document).ready(function(){ $.getJSON( "/static/data/select-options.json" , fu
                         $("#modal-aromas-label").remove();
                     }       
 
-                    $("#dislike-btn").attr("src", "/static/images/dislike-thumb-light.png");
-                    $("#like-btn").attr("src", "/static/images/thumbs-up-light.png");
-
-                    if($("#dislike-btn").attr("disliked")) {
-                        let disliked = JSON.stringify($("#dislike-btn").attr("disliked"));
-                        disliked = JSON.parse(disliked);
-                        if (disliked.indexOf(strain[1]["name"])>-1) {
-                            $("#dislike-btn").attr("src", "/static/images/dislike-thumb-dark.png");
-                            $("#like-btn").attr("src", "/static/images/thumbs-up-light.png");
-                        }
-                    }
-
-                    if($("#like-btn").attr("liked")) {
-                        let liked = JSON.stringify($("#like-btn").attr("liked"));
-                        liked = JSON.parse(liked);
-                        if (liked.indexOf(strain[1]["name"])>-1) {
-                            $("#dislike-btn").attr("src", "/static/images/dislike-thumb-light.png");
-                            $("#like-btn").attr("src", "/static/images/thumbs-up-dark.png");
-                        }
-                    }
+                    update_like_btn(strain);
+                    update_dislike_btn(strain);
                     
                     $("#dislike-btn").on("click", function(){
                         let requestData = {};
                         requestData.user = $("#dislike-btn").attr("user");
                         requestData.strain = $(".modal-title").text();
-
-                        if ($(this).attr("src") =="/static/images/dislike-thumb-light.png") {
-                            requestData.input = -1;
-                            $(this).attr("src", "/static/images/dislike-thumb-dark.png");
-                            $("#like-btn").attr("src", "/static/images/thumbs-up-light.png"); 
-                        } else {
-                            console.log($(this).attr("src"));
-                            requestData.input = 0;
-                            $(this).attr("src", "/static/images/dislike-thumb-light.png");
-                        }
-
+                        dislike_strain(requestData.strain);
+                        update_dislike_btn(strain);
+                        requestData.input = like_status[requestData.strain];
+                        console.log(requestData);
                         $.post('provide-strain-feedback', JSON.stringify(requestData));
                     });
 
                     $("#like-btn").on("click", function(){
                         let requestData = {};
-                        requestData.user = $("#dislike-btn").val();
-                        // requestData.strain = strain[1]["name"];
+                        requestData.user = $("#dislike-btn").attr("user");
                         requestData.strain = $(".modal-title").text();
-
-                        if ($(this).attr("src") =="/static/images/thumbs-up-light.png") {
-                            requestData.input = 1;
-                            $(this).attr("src", "/static/images/thumbs-up-dark.png");
-                            $("#dislike-btn").attr("src", "/static/images/dislike-thumb-light.png");
-                        } else {
-                            requestData.input = 1;
-                            $(this).attr("src", "/static/images/thumbs-up-light.png");
-                        }
-
+                        like_strain(requestData.strain);
+                        update_like_btn(strain);
+                        requestData.input = like_status[requestData.strain];
+                        console.log(requestData);
                         $.post('provide-strain-feedback', JSON.stringify(requestData));
                     });
                     
