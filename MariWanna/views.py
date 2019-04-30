@@ -641,8 +641,7 @@ def create_user_feedback_query(user_id, strain_id, user_feedback_score):
     return insert_user_feedback_query
 
 def create_delete_older_feedback_query(user_id, strain_id, user_feedback_score):
-    user_feedback_score = user_feedback_score * -1 
     delete_older_feedback_query = "DELETE FROM user_feedback WHERE \
         user_id={user_id} AND strain_id={strain_id} \
-            AND user_feedback={user_feedback_score}".format(user_id=user_id, strain_id=strain_id, user_feedback_score=user_feedback_score)
+            AND user_feedback!={user_feedback_score}".format(user_id=user_id, strain_id=strain_id, user_feedback_score=user_feedback_score)
     return delete_older_feedback_query
