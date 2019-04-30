@@ -614,11 +614,11 @@ def provide_strain_feedback(request):
         user_feedback_score = user_feedback['input']
 
         strain_id = get_strain_id_given(strain_name)
+        print("Hello: ", strain_id)
         insert_user_feedback_query = create_user_feedback_query(user_id, strain_id, user_feedback_score)
         db.execute_insert_statement(insert_user_feedback_query)
 
         delete_older_feedback_query = create_delete_older_feedback_query(user_id, strain_id, user_feedback_score)
-        print(delete_older_feedback_query)
         db.execute_insert_statement(delete_older_feedback_query)
 
     return render_url(request, 'search_custom.html')
