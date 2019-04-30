@@ -260,7 +260,7 @@ $(document).ready(function(){ $.getJSON( "/static/data/select-options.json" , fu
             str = str.concat(span);
         }
 
-        if(weights.strength != 0) {
+        if(weights.keyword != 0) {
             let span = "<p class=\"keyword-weight\"><b class=\"mr-3\">Keywords</b> " + weights.keywords.toFixed(2) + "</p>";
             str = str.concat(span);
         }
@@ -337,7 +337,7 @@ $(document).ready(function(){ $.getJSON( "/static/data/select-options.json" , fu
         requestData.flavors = [];
         requestData.aromas = [];
         requestData.keywords = [];
-        
+
         $("#allEffects").children().each(function(){
             let tag = $(this).text();
             
@@ -375,7 +375,6 @@ $(document).ready(function(){ $.getJSON( "/static/data/select-options.json" , fu
             data.forEach(function(strain){
                 console.log(strain);
                 $("#results").append('<div id="strain_'+ count +'" class="card bg-light strain-result ml-2 mr-2 mb-2 shadow">' + 
-                // '<img src="' + strain[1]["image"] +'" class="card-img-top" alt="...">' +
                 '<div class="card-body">' +
                     '<div class="d-flex justify-content-between"><h5 class="card-title font-weight-bolder mb-1">' + strain[1]["name"] +'</h5><p class="text-muted text-small">' + strain[0].toFixed(2) + '</p></div>' +
                         '<p class="card-text mb-1 text-muted font-italic">Rating: '+ Number(strain[1]["rating"]).toFixed(2) +'/5.00</p>' +
@@ -433,6 +432,8 @@ $(document).ready(function(){ $.getJSON( "/static/data/select-options.json" , fu
                     } else {
                         $("#modal-aromas-label").remove();
                     }       
+
+                    // if(strain strain[0])
                     
                     $("#dislike-btn").on("click", function(){
                         let requestData = {};
@@ -468,7 +469,6 @@ $(document).ready(function(){ $.getJSON( "/static/data/select-options.json" , fu
 
                         $.post('provide-strain-feedback', JSON.stringify(requestData));
                     });
-
                     
                 });
 
