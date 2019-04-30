@@ -48,21 +48,6 @@ def reverse_categories():
     with open('../data/inverse_categories.json', 'w') as outfile:
         json.dump(inverse_dict, outfile)
 
-def generate_strainname_to_vector_dict():
-    all_data = {}
-    with open('../data/combined_cleaned_data.json', encoding="utf8") as f:
-        all_data = json.load(f)
-
-    vector_dict = {}
-    for datum in all_data:
-        if datum['name'] == 'Cherry Skunk':
-            print(datum['vector'])
-        vector_dict[datum['name']] = datum
-
-
-    with open('../data/strain_to_vector.json', 'w') as outfile:
-        json.dump(vector_dict, outfile)
-
 
 def keys_to_category_and_index():
     '''
@@ -111,6 +96,6 @@ def lda_keywords():
 if __name__ == "__main__":
     # get_all_categories()
     # reverse_categories()
-    generate_strainname_to_vector_dict()
+    
     # keys_to_category_and_index()
     # lda_keywords()
