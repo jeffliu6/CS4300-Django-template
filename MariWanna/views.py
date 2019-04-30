@@ -151,6 +151,38 @@ def create_query_for_new_user(email, hashed_password):
     return ("INSERT INTO users (email, password) \
         VALUES ('{email}', '{password}')".format(email=email, password=hashed_password))
 
+def search_vector_to_obj(strain_vector):
+    keys_vector = []
+    with open('./data/keys_vector.json', encoding="utf8") as f:
+        keys_vector = json.loads(f.read())
+
+    inverse_categories_dict = {}
+    with open('./data/inverse_categories.json', encoding="utf8") as f:
+        inverse_categories_dict = json.loads(f.read())
+
+
+    total_dict = {}
+    total_dict['positive'] = []
+    total_dict['negative'] = []
+    total_dict['medical'] = []
+    total_dict['aroma'] = []
+    total_dict['flavor'] = []
+    total_dict['keywords'] = []
+    total_dict['strength'] = []
+    for index in range(len(strain_vector)):
+        if strain_vector[index] == 1:
+            curr_val = keys_vector[index]
+            category_lst = inverse_categories_dict[curr_val]
+            for cat in category_lst:
+                total_dict[cat] = (total_dict[cat]) + [curr_val]
+
+
+    total_dict['flavor_descriptors'] = total_dict['flavor']
+    total_dict['negative_effects'] = total_dict['negative']
+    del total_dict['flavor']
+    del total_dict['negative']
+    return total_dict
+
 @csrf_exempt
 def similar_results(request):
     keys_vector = {}
@@ -159,53 +191,57 @@ def similar_results(request):
 
     current_strain_request = (get_request_data(request))
     current_strain_name = current_strain_request['strain']
-    # Get Data (Change later?)
-    data = {}
-    with open('./data/combined_cleaned_data.json', encoding="utf8") as f:
-        data = json.loads(f.read())
+
+    # get strain from db
+    search_strain_vector = get_strain_obj(current_strain_name)
 
     #getting the correct strain data
-    current_strain_data = []
-    for strain in data:
-        if current_strain_name in strain["name"] or current_strain_name in strain["name"]:
-            current_strain_data = strain
-            break
-    if current_strain_data == []:
-        return HttpResponse(json.dumps(current_strain_data))
+    if search_strain_vector == None:
+        return HttpResponse(json.dumps([]))
 
-    search_strain, relv_search = get_rel_search(current_strain_data['vector'])
 
-    scoring = []
-    for i in range(len(data)):
-        curr_strain = data[i]
-        curr_array = []
-        score_categories_breakdown_lst = []
-        for relv_item in relv_search:
-            relv_index = relv_item[0]
-            curr_value = (curr_strain['vector'])[relv_index]
-            curr_array.append(curr_value)
-            # for the score breakdown, what words are relevant
-            if relv_index < len(keys_vector):
-                score_categories_breakdown_lst.append(keys_vector[relv_index])
+    search_obj = search_vector_to_obj(search_strain_vector)
 
-        rating = float(curr_strain['rating'])/5
-        rating_score = settings.RATING_WEIGHT * rating
 
-        cos_sim = cosine_sim(array(search_strain), array(curr_array))
-        categories_score = (1 - settings.RATING_WEIGHT) * cos_sim
+    search_strain, relv_search = get_rel_search(search_strain_vector)
 
-        score = rating_score + categories_score
+    search_strain_names = find_relevant_strains(search_obj)
 
-        strength_score = None
-        keywords_score, search_strength = None, None
-        score_breakdown = calculate_score_breakdown(score, \
-            score_categories_breakdown_lst, rating_score, \
-            categories_score, keywords_score, search_strength, strength_score)
+    search_vectors = names_to_vectors(search_strain_names)
 
-        scoring.append((score, curr_strain, score_breakdown))
+    strain_ranks = rank_strains(search_vectors, search_strain, relv_search, None, None, keys_vector)
 
-    sorted_strains_final = sorted(scoring, key=lambda tup: tup[0], reverse=True)[1:50] #skip the first so you don't return the searched strain
-    return HttpResponse(json.dumps(sorted_strains_final))
+    # scoring = []
+    # for i in range(len(data)):
+    #     curr_strain = data[i]
+    #     curr_array = []
+    #     score_categories_breakdown_lst = []
+    #     for relv_item in relv_search:
+    #         relv_index = relv_item[0]
+    #         curr_value = (curr_strain['vector'])[relv_index]
+    #         curr_array.append(curr_value)
+    #         # for the score breakdown, what words are relevant
+    #         if relv_index < len(keys_vector):
+    #             score_categories_breakdown_lst.append(keys_vector[relv_index])
+    #
+    #     rating = float(curr_strain['rating'])/5
+    #     rating_score = settings.RATING_WEIGHT * rating
+    #
+    #     cos_sim = cosine_sim(array(search_strain), array(curr_array))
+    #     categories_score = (1 - settings.RATING_WEIGHT) * cos_sim
+    #
+    #     score = rating_score + categories_score
+    #
+    #     strength_score = None
+    #     keywords_score, search_strength = None, None
+    #     score_breakdown = calculate_score_breakdown(score, \
+    #         score_categories_breakdown_lst, rating_score, \
+    #         categories_score, keywords_score, search_strength, strength_score)
+    #
+    #     scoring.append((score, curr_strain, score_breakdown))
+    #
+    # sorted_strains_final = sorted(scoring, key=lambda tup: tup[0], reverse=True)[1:50] #skip the first so you don't return the searched strain
+    return HttpResponse(json.dumps(strain_ranks[1:]))
 
 
 def get_request_data(request):
@@ -410,9 +446,9 @@ def calculate_score_breakdown(score, \
 
 @csrf_exempt
 def custom_results(request):
-    data = {}
-    with open('./data/combined_cleaned_data.json', encoding="utf8") as f:
-        data = json.loads(f.read())
+    # data = {}
+    # with open('./data/combined_cleaned_data.json', encoding="utf8") as f:
+    #     data = json.loads(f.read())
     keys_vector = []
     with open('./data/keys_vector.json') as f:
         keys_vector = json.load(f)
@@ -468,6 +504,19 @@ def search_to_vector(input, keys_vector):
     cond_vector = [1 if key in vector_list else 0 for key in keys_vector]
     cond_vector.append(1) #always include rating
     return array(cond_vector)
+
+def get_strain_obj(name):
+    query_strain_name = "SELECT *\
+        FROM strain_vectors \
+        WHERE strain_name = '{strain}'".format(strain = name)
+    raw_vector = db.execute_select_statement(query_strain_name)
+    if raw_vector == []:
+        return None
+    else:
+        real_vector = raw_vector[0][2:]
+        return real_vector
+
+
 
 
 def find_relevant_strains(search_keys):
