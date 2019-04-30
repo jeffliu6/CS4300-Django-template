@@ -255,10 +255,10 @@ $(document).ready(function () {
             let popover = {};
             let str = "";
 
-            // if(weights.feedback) {
-            //     let span = "<p class=\"feedback-weight\"><b class=\"mr-3\">Feedback</b> " + weights.feedback.toFixed(2) + "</p>";
-            //     str = str.concat(span);
-            // }
+            if(weights.social) {
+                let span = "<p class=\"feedback-weight\"><b class=\"mr-3\">Feedback</b><1.00</p>";
+                str = str.concat(span);
+            }
 
             if (weights.rating != 0) {
                 let span = "<p class=\"rating-weight\"><b class=\"mr-3\">Rating</b> " + weights.rating.toFixed(2) + "</p>";
