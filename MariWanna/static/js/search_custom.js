@@ -383,8 +383,6 @@ $(document).ready(function(){ $.getJSON( "/static/data/select-options.json" , fu
                         '<button type="button" class="btn" data-toggle="popover" data-triggor="focus" data-container="body" title="Score Breakdown"' + 
                         '"><img class="question-icon float-right" src="/static/images/question-mark-light.png"/></button></div>' +
                 '</div>');
-                
-
 
                 $("[data-toggle=popover]").popover({
                     trigger: 'focus',
@@ -433,30 +431,50 @@ $(document).ready(function(){ $.getJSON( "/static/data/select-options.json" , fu
                         $("#modal-aromas-label").remove();
                     }       
 
-                    // if(strain strain[0])
+                    $("#dislike-btn").attr("src", "/static/images/dislike-thumb-light.png");
+                    $("#like-btn").attr("src", "/static/images/thumbs-up-light.png");
+
+                    if($("#dislike-btn").attr("disliked")) {
+                        let disliked = JSON.stringify($("#dislike-btn").attr("disliked"));
+                        disliked = JSON.parse(disliked);
+                        if (disliked.indexOf(strain[1]["name"])>-1) {
+                            $("#dislike-btn").attr("src", "/static/images/dislike-thumb-dark.png");
+                            $("#like-btn").attr("src", "/static/images/thumbs-up-light.png");
+                        }
+                    }
+
+                    if($("#like-btn").attr("liked")) {
+                        let liked = JSON.stringify($("#like-btn").attr("liked"));
+                        liked = JSON.parse(liked);
+                        if (liked.indexOf(strain[1]["name"])>-1) {
+                            $("#dislike-btn").attr("src", "/static/images/dislike-thumb-light.png");
+                            $("#like-btn").attr("src", "/static/images/thumbs-up-dark.png");
+                        }
+                    }
                     
                     $("#dislike-btn").on("click", function(){
                         let requestData = {};
                         requestData.user = $("#dislike-btn").attr("user");
-                        requestData.strain = strain[1]["name"];
+                        requestData.strain = $(".modal-title").text();
 
                         if ($(this).attr("src") =="/static/images/dislike-thumb-light.png") {
                             requestData.input = -1;
                             $(this).attr("src", "/static/images/dislike-thumb-dark.png");
                             $("#like-btn").attr("src", "/static/images/thumbs-up-light.png"); 
                         } else {
+                            console.log($(this).attr("src"));
                             requestData.input = 0;
                             $(this).attr("src", "/static/images/dislike-thumb-light.png");
                         }
 
-                        console.log(requestData);
                         $.post('provide-strain-feedback', JSON.stringify(requestData));
                     });
 
                     $("#like-btn").on("click", function(){
                         let requestData = {};
                         requestData.user = $("#dislike-btn").val();
-                        requestData.strain = strain[1]["name"];
+                        // requestData.strain = strain[1]["name"];
+                        requestData.strain = $(".modal-title").text();
 
                         if ($(this).attr("src") =="/static/images/thumbs-up-light.png") {
                             requestData.input = 1;
