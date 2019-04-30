@@ -46,8 +46,6 @@ def logout(request):
     try:
         del request.session['user_id']
         del request.session['email']
-        del request.session['liked_strains']
-        del request.session['disliked_strains']
     except:
         pass
     response = redirect('/login')
