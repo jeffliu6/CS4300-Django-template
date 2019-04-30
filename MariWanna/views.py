@@ -417,9 +417,25 @@ def rank_strains(search_vectors, search_strain, relv_search, dom_topic, search_s
         if curr_strain['name'] in disliked_strains:
             disliked = True
 
+        social_change = 0
+        if liked:
+            social_change = 100 * settings.LIKE_CHANGE#(1-score)**settings.LIKE_WEIGHT
+        elif disliked:
+            social_change = 100 * -1 *settings.LIKE_CHANGE#-1  * score**settings.LIKE_WEIGHT
+
+        if score + social_change > 100:
+            social_change = 100 - score
+            score = 100
+        elif score + social_change < 0:
+            social_change = score
+            score = 0
+        else:
+            score = score + social_change
+
         score_breakdown = calculate_score_breakdown(curr_strain['name'], score, \
             score_categories_breakdown_lst, 100*rating_score, \
-            100*categories_score, 100*keywords_score, 100*strength_score, liked, disliked)
+            100*categories_score, 100*keywords_score, 100*strength_score, social_change)
+
 
         scoring.append((score, curr_strain, score_breakdown))
 
@@ -428,7 +444,7 @@ def rank_strains(search_vectors, search_strain, relv_search, dom_topic, search_s
 
 def calculate_score_breakdown(name, score, \
     score_categories_breakdown_lst, rating_score, \
-    categories_score, keywords_score, strength_score, liked, disliked):
+    categories_score, keywords_score, strength_score, social_change):
     '''
         return score object
         {
@@ -442,26 +458,18 @@ def calculate_score_breakdown(name, score, \
 
         }
     '''
-    change = 0
-    if liked:
-        change = (1-score)**settings.LIKE_WEIGHT
-    elif disliked:
-        change = -1  * score**settings.LIKE_WEIGHT
-    score = score + change
 
     score_breakdown = {}
     score_breakdown['rating'] = rating_score
     score_breakdown['keywords'] = 0 if (keywords_score is None or keywords_score == 0) else keywords_score
     score_breakdown['strength'] = 0 if strength_score == 0 else strength_score
-    score_breakdown['social'] = change
+    score_breakdown['social'] = social_change
 
     inverse_categories= {}
     with open('./data/inverse_categories.json', encoding="utf8") as f:
         inverse_categories = json.loads(f.read())
 
-
     per_word_score = 0 if len(score_categories_breakdown_lst)==0 else categories_score/len(score_categories_breakdown_lst)
-
 
     for word in score_categories_breakdown_lst:
         categories = inverse_categories[word]
