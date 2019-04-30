@@ -75,8 +75,8 @@ def is_session_set(request):
 
 def convert_request_to_context(request):
     user_id = request.session['user_id']
-    liked_strains = find_liked_strains(user_id)
-    disliked_strains = find_disliked_strains(user_id)
+    liked_strains = ",".join(find_liked_strains(user_id))
+    disliked_strains = ",".join(find_disliked_strains(user_id))
     context = {'user_id': user_id,
         'email': request.session['email'],
         'liked_strains': liked_strains,
