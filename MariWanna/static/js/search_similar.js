@@ -185,16 +185,16 @@ $(document).ready(function() {
                         '<p class="card-text mb-1 text-muted font-italic">Rating: '+ Number(strain[1]["rating"]).toFixed(2) +'/5.00</p>' +
                         '<p class="card-text">'+ strain[1]["description"].substring(0, 90) +'...</p>' +
                         '<div class="d-flex justify-content-between"><p class="text-success modal-triggor" data-toggle="modal" data-target="#exampleModalLong">See More</p>' +
-                        '<button type="button" class="btn" data-toggle="popover" data-triggor="focus" data-container="body" title="Shared Trait Weightings" ' + 
-                        '"><img class="question-icon float-right" src="/static/images/question-mark-light.png"/></button></div>' +
+                        // '<button type="button" class="btn" data-toggle="popover" data-triggor="focus" data-container="body" title="Shared Trait Weightings" ' + 
+                        // '"><img class="question-icon float-right" src="/static/images/question-mark-light.png"/></button></div>' +
                         '</div>' +
                 '</div>');
                 
-                $("[data-toggle=popover]").popover({
-                    trigger: 'focus',
-                    html: true,
-                    content: get_popover(strain[2])
-                  });
+                // $("[data-toggle=popover]").popover({
+                //     trigger: 'focus',
+                //     html: true,
+                //     content: get_popover(strain[2])
+                //   });
 
                 $("#strain_" + count).on("click", function() {
 

@@ -137,3 +137,7 @@ footer {
 #like-btn:hover, #dislike-btn:hover {
     cursor: pointer;
 }
+
+#create-account-text {
+    max-width: 235px;
+}

@@ -256,7 +256,7 @@ $(document).ready(function () {
             let str = "";
 
             if(weights.social) {
-                let span = "<p class=\"feedback-weight\"><b class=\"mr-3\">Feedback</b><1.00</p>";
+                let span = "<p class=\"feedback-weight\"><b class=\"mr-3\">Feedback</b> " + weights.social.toFixed(2) + "</p>";
                 str = str.concat(span);
             }
 
