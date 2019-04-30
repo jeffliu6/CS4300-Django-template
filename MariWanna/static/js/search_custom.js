@@ -515,6 +515,7 @@ $(document).ready(function(){ $.getJSON( "/static/data/select-options.json" , fu
                         dislike_strain(requestData.strain);
                         update_dislike_btn(strain);
                         requestData.input = like_status[requestData.strain];
+                        console.log(like_status);
                         console.log(requestData);
                         $.post('provide-strain-feedback', JSON.stringify(requestData));
                     });
@@ -526,6 +527,7 @@ $(document).ready(function(){ $.getJSON( "/static/data/select-options.json" , fu
                         like_strain(requestData.strain);
                         update_like_btn(strain);
                         requestData.input = like_status[requestData.strain];
+                        console.log(like_status);
                         console.log(requestData);
                         $.post('provide-strain-feedback', JSON.stringify(requestData));
                     });
