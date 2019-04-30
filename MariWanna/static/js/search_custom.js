@@ -254,6 +254,11 @@ $(document).ready(function(){ $.getJSON( "/static/data/select-options.json" , fu
     function get_popover(weights) {
         let popover = {};
         let str = "";
+
+        // if(weights.feedback) {
+        //     let span = "<p class=\"feedback-weight\"><b class=\"mr-3\">Feedback</b> " + weights.feedback.toFixed(2) + "</p>";
+        //     str = str.concat(span);
+        // }
         
         if(weights.rating != 0) {
             let span = "<p class=\"rating-weight\"><b class=\"mr-3\">Rating</b> " + weights.rating.toFixed(2) + "</p>";
@@ -510,18 +515,18 @@ $(document).ready(function(){ $.getJSON( "/static/data/select-options.json" , fu
                         dislike_strain(requestData.strain);
                         update_dislike_btn(strain);
                         requestData.input = like_status[requestData.strain];
-                        console.log("clicked");
+                        console.log(requestData);
                         $.post('provide-strain-feedback', JSON.stringify(requestData));
                     });
 
                     $("#like-btn").on("click", function(){
                         let requestData = {};
-                        requestData.user = $("#dislike-btn").val();
+                        requestData.user = $("#dislike-btn").attr("user");
                         requestData.strain = $(".modal-title").text();
                         like_strain(requestData.strain);
                         update_like_btn(strain);
                         requestData.input = like_status[requestData.strain];
-
+                        console.log(requestData);
                         $.post('provide-strain-feedback', JSON.stringify(requestData));
                     });
                     
