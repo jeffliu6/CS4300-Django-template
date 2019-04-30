@@ -622,6 +622,7 @@ def format_key_to_db_key(key):
 @csrf_exempt
 def provide_strain_feedback(request):
     user_feedback = convert_to_dictionary(request)
+    print(request.POST.keys())
     if is_session_set(request):
         user_id = request.session['user_id']
         strain_name = user_feedback['strain']
