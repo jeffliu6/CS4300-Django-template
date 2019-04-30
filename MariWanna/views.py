@@ -222,7 +222,7 @@ def get_request_data(request):
     return json.loads(k)
 
 
-def parse_search(data, keys_vector):
+def parse_search(data):
     '''
         determine what search terms are valid and
         set up the strain object
@@ -257,19 +257,18 @@ def parse_search(data, keys_vector):
         if term in categories['flavor']:
             flavor_lst.append(term)
 
-    keyword_lst = data.get("keyword")
+    lda_keys = {}
+    with open('./data/lda_keys.json', encoding="utf8") as f:
+        lda_keys = json.load(f)
+    keyword_lst = data.get("keywords")
     if keyword_lst == None:
         keyword_lst = []
     valid_key_lst = []
     for keyword in keyword_lst:
-        if keyword in keys_vector:
+        if keyword in lda_keys:
             valid_key_lst.append(keyword.lower().strip())
 
-    # state = data.get('state')
-    # city = data.get('city')
     strength = data.get('strength')
-
-
     #if input is just gibberish return None
     if len(positive_lst) + len(negative_lst) + len(medical_lst) + \
         len(aroma_lst) + len(flavor_lst) + len(valid_key_lst) == 0:
@@ -300,7 +299,7 @@ def get_dom_topic(strain):
     # choose a maximum with random tiebreaker
     if max(dom_topic_weights) == 0:
         return None
-    shuffle(dom_topic_weights)
+    # shuffle(dom_topic_weights)
     return max(range(len(dom_topic_weights)), key=lambda i: dom_topic_weights[i])
 
 
@@ -353,7 +352,7 @@ def rank_strains(search_vectors, search_strain, relv_search, dom_topic, search_s
 
         keywords_score = settings.DOM_TOPIC_WEIGHT * (1 if (dom_topic is not None and curr_strain['dominant_topic'] == int(dom_topic)) else 0)
 
-        cos_sim = cosine_sim(array(search_strain), array(curr_array))
+        cos_sim = 0 if len(curr_array) == 1 else cosine_sim(array(search_strain), array(curr_array))
         strength_score = None
         if search_strength == None:
             # add strength weight back in if it doesn't exist
@@ -368,7 +367,6 @@ def rank_strains(search_vectors, search_strain, relv_search, dom_topic, search_s
         score_breakdown = calculate_score_breakdown(score, \
             score_categories_breakdown_lst, rating_score, \
             categories_score, keywords_score, search_strength, strength_score)
-
 
         scoring.append((score, curr_strain, score_breakdown))
 
@@ -392,15 +390,15 @@ def calculate_score_breakdown(score, \
         }
     '''
     score_breakdown = {}
-    score_breakdown['rating'] = rating_score/score
-    score_breakdown['keywords'] = 0 if (keywords_score is None or keywords_score == 0) else keywords_score/score
-    score_breakdown['strength'] = 0 if search_strength is None else strength_score/score
+    score_breakdown['rating'] = rating_score#/score
+    score_breakdown['keywords'] = 0 if (keywords_score is None or keywords_score == 0) else keywords_score#/score
+    score_breakdown['strength'] = 0 if search_strength is None else strength_score#/score
 
     inverse_categories= {}
     with open('./data/inverse_categories.json', encoding="utf8") as f:
         inverse_categories = json.loads(f.read())
 
-    per_word_score = categories_score/score/len(score_categories_breakdown_lst)
+    per_word_score = 0 if len(score_categories_breakdown_lst)==0 else categories_score/score/len(score_categories_breakdown_lst)
     for word in score_categories_breakdown_lst:
         categories = inverse_categories[word]
         for category in categories:
@@ -427,7 +425,7 @@ def custom_results(request):
     user_request = get_request_data(request)
 
     # get strain and determine valid search
-    search_obj = parse_search(user_request, keys_vector)
+    search_obj = parse_search(user_request)
 
     #if no inputs or gibberish inputs in keywords only
     if search_obj is None:
@@ -487,10 +485,12 @@ def get_strain_obj(name):
         real_vector = raw_vector[0][2:]
         return real_vector
 
-
-
-
 def find_relevant_strains(search_keys):
+    #create copy without keywords
+    new_search_keys = {}
+    for key in search_keys:
+        if key != 'keywords':
+            new_search_keys[key] = search_keys[key]
     query_for_strain_names = create_db_query_for_strain_names(search_keys)
     raw_strain_names_results = db.execute_select_statement(query_for_strain_names)
     strain_names = [record[0] for record in raw_strain_names_results]
@@ -516,12 +516,17 @@ def create_db_query_for_strain_names(search_keys):
                 ORDER BY strain_score DESC \
                 LIMIT 50".format(sum_all_db_keys = " + ".join(keys_for_db))
     else:
-        query_for_strain_names = "SELECT strain_name, 6 - {negative_sum_all_db_keys} as strain_score \
-            FROM strain_vectors \
-            WHERE {negative_sum_all_db_keys} = 0 \
-            ORDER BY strain_score DESC \
-            LIMIT 50".format(negative_sum_all_db_keys = " + ".join(negative_keys_for_db))
-
+        if len(negative_keys_for_db) > 0:
+            query_for_strain_names = "SELECT strain_name, 6 - {negative_sum_all_db_keys} as strain_score \
+                FROM strain_vectors \
+                WHERE {negative_sum_all_db_keys} = 0 \
+                ORDER BY strain_score DESC \
+                LIMIT 50".format(negative_sum_all_db_keys = " + ".join(negative_keys_for_db))
+        else:
+            query_for_strain_names = "SELECT strain_name, rating \
+                FROM strains \
+                ORDER BY rating DESC \
+                LIMIT 50"
     return query_for_strain_names
 
 def get_db_keys(search_keys):
@@ -573,7 +578,7 @@ def provide_strain_feedback(request):
 def get_strain_id_given(strain_name):
     get_id_query = "SELECT id FROM strain_vectors WHERE strain_name = \
         '{strain_name}'".format(strain_name = strain_name)
-    
+
     strain_id_results = db.execute_select_statement(get_id_query)
     strain_id = strain_id_results[0][0]
     return strain_id
@@ -581,5 +586,3 @@ def get_strain_id_given(strain_name):
 def create_user_feedback_query(user_id, strain_id, user_feedback_score):
     insert_user_feedback_query = "INSERT INTO user_feedback (user_id, strain_id, user_feedback) VALUES ({user_id}, {strain_id}, {user_feedback_score})".format(user_id=user_id, strain_id=strain_id, user_feedback_score=user_feedback_score)
     return insert_user_feedback_query
-
-    

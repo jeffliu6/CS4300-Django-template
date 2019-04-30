@@ -8,8 +8,6 @@ from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
 from nltk.tokenize import RegexpTokenizer
 import json
 import pandas as pd
-import os
-# from os.path import dirname, abspath
 from pathlib import Path
 
 
@@ -72,21 +70,21 @@ def lda_try():
 
     final_tokenized = list(final_tokenized)
 
+    print('bigrams')
     bigram_modification = gensim.models.Phrases(final_tokenized, min_count = 5, threshold = 100)
-
     data_nostops_words = remove_stopwords(final_tokenized, stop_words)
-
     data_bigrams = make_bigrams(data_nostops_words, bigram_modification)
 
+    print('loading spacy')
     nlp = spacy.load('en', disable=['parser', 'ner'])
 
+    print("lemmatizing")
     data_lemmatized = lemmatization(data_bigrams, nlp, allowed_postags=['NOUN', 'ADJ', 'VERB', 'ADV'])
-
     id2word = corpora.Dictionary(data_lemmatized)
-
     corpus = [id2word.doc2bow(text) for text in data_lemmatized]
 
-    mallet_path = '\\mallet-2.0.8\\bin\\mallet.bat'
+    print('mallet path')
+    mallet_path = str(Path("mallet-2.0.8/bin/mallet.bat"))
     ldamallet = gensim.models.wrappers.LdaMallet(mallet_path, corpus=corpus, num_topics=20, id2word=id2word)
 
     # model_topics = ldamallet.show_topics(formatted=False)

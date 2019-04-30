@@ -99,9 +99,21 @@ def keys_to_category_and_index():
     with open('../data/keys_vector.json', 'w') as f:
         json.dump(union_set, f)
 
+def lda_keywords():
+    lda = {}
+    with open('../data/lda.json', encoding="utf8") as f:
+        lda = json.load(f)
+
+    output = []
+    for key in lda:
+        output = output + list(lda[key].keys())
+
+    with open('../data/lda_keys.json', 'w') as f:
+        json.dump(output, f)
 
 if __name__ == "__main__":
     # get_all_categories()
     # reverse_categories()
     # generate_strainname_to_vector_dict()
-    keys_to_category_and_index()
+    # keys_to_category_and_index()
+    lda_keywords()
