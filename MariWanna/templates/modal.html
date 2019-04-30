@@ -7,6 +7,8 @@
               {% if user_id %}
                 <img id="dislike-btn" user="{{ user_id }}" src="/static/images/dislike-thumb-light.png"/>
                 <img class="ml-2" id="like-btn" src="/static/images/thumbs-up-light.png"/>
+              {% else %}
+                <span class="text-small text-center text-muted"><a class="btn btn-dark" href="login">Login</a> to provide feedback on this result</span>
               {% endif %}
               <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                 <span aria-hidden="true">&times;</span>
