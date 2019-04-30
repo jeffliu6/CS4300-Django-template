@@ -430,48 +430,6 @@ $(document).ready(function () {
                 }
             }
 
-<<<<<<< HEAD
-                    if (strain[1]["flavor_descriptors"]) {
-                        $("#modal-flavors").text(strain[1]["flavor_descriptors"].join(", "));
-                    } else {
-                        $("#modal-flavors-label").remove();
-                    }      
-                    
-                    if (strain[1]["aroma"]) {
-                        $("#modal-aromas").text(strain[1]["aroma"].join(", "));
-                    } else {
-                        $("#modal-aromas-label").remove();
-                    }       
-
-                    update_like_btn(strain);
-                    update_dislike_btn(strain);
-                    
-                    $("#dislike-btn").on("click", function(){
-                        let requestData = {};
-                        requestData.user = $("#dislike-btn").attr("user");
-                        requestData.strain = $(".modal-title").text();
-                        dislike_strain(requestData.strain);
-                        update_dislike_btn(strain);
-                        requestData.input = like_status[requestData.strain];
-                        console.log(like_status);
-                        console.log(requestData);
-                        $.post('provide-strain-feedback', JSON.stringify(requestData));
-                    });
-
-                    $("#like-btn").on("click", function(){
-                        let requestData = {};
-                        requestData.user = $("#dislike-btn").attr("user");
-                        requestData.strain = $(".modal-title").text();
-                        like_strain(requestData.strain);
-                        update_like_btn(strain);
-                        requestData.input = like_status[requestData.strain];
-                        console.log(like_status);
-                        console.log(requestData);
-                        $.post('provide-strain-feedback', JSON.stringify(requestData));
-                    });
-                    
-                });
-=======
             console.log(requestData);
             $.post("results-custom", JSON.stringify(requestData))
                 .always(function () {
@@ -482,7 +440,6 @@ $(document).ready(function () {
                     data = JSON.parse(data);
 
                     $('#results').empty();
->>>>>>> 23ffb957ff2bb2f57237aa073a3127def245d1c4
 
                     let count = 0;
 
@@ -551,7 +508,7 @@ $(document).ready(function () {
                             update_like_btn(strain);
                             update_dislike_btn(strain);
 
-                            $("#dislike-btn").on("click", function () {
+                            $("#dislike-btn").unbind('click').on("click", function () {
                                 let requestData = {};
                                 requestData.user = $("#dislike-btn").attr("user");
                                 requestData.strain = $(".modal-title").text();
@@ -563,7 +520,7 @@ $(document).ready(function () {
                                 requestData = {}
                             });
 
-                            $("#like-btn").on("click", function () {
+                            $("#like-btn").unbind('click').on("click", function () {
                                 let requestData = {};
                                 requestData.user = $("#dislike-btn").attr("user");
                                 requestData.strain = $(".modal-title").text();
